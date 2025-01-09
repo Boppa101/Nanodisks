@@ -155,6 +155,7 @@ double g_m(double x, int cutoff, int m) {
     double x_min = 0.95;
     double x_max = 0.999;
 
+    // For values of x close to 1, a higher order is needed for accurate results
     if(x>=x_min) cutoff = 3000; // max for cutoff is 5000
 
     if(m==0) {
@@ -226,8 +227,8 @@ void FillG2(double* ThetaArr, int m, int N, int cutoff, double* G2Arr) {
             gsl_integration_workspace *workspace = gsl_integration_workspace_alloc(10000);
             gsl_function F;
             F.function = &IntegrandG2; F.params = &params;
-            gsl_integration_qags(&F, ThetaArr[j]-delta/2, ThetaArr[j], 1e-10, 1e-10, 10000, workspace, &result1, &error);
-            gsl_integration_qags(&F, ThetaArr[j], ThetaArr[j]+delta/2, 1e-10, 1e-10, 10000, workspace, &result2, &error);
+            gsl_integration_qags(&F, ThetaArr[j]-delta/2, ThetaArr[j], 1e-7, 1e-7, 10000, workspace, &result1, &error);
+            gsl_integration_qags(&F, ThetaArr[j], ThetaArr[j]+delta/2, 1e-7, 1e-7, 10000, workspace, &result2, &error);
             gsl_integration_workspace_free(workspace);
             G2Arr[i*N+j] = result1 + result2;
         }

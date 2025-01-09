@@ -38,9 +38,9 @@ int main(void) {
     double* ThetaArr = (double*)malloc(sizeof(double)*N);
     FillTheta(N, ThetaArr);
 
-    int res = TestM(N, m, cutoff, ThetaArr);
+    // int res = TestM(N, m, cutoff, ThetaArr);
     // int res = TestDTilde(N, m, ThetaArr);
-    // int res = TestG0(N, m, cutoff, ThetaArr);
+    int res = TestG0(N, m, cutoff, ThetaArr);
     printf("%d\n", res);
 
     // double* res = (double*)malloc(sizeof(double)*N);
