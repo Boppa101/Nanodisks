@@ -26,6 +26,7 @@ double complex Drude(double EF, double omega, double gamma) {
 }
 
 void FillD1(int N, int m, double* D1Arr) {
+    for(int i=0; i<N*N; i++) D1Arr[i] = 0;
     double delta = 1.0/(double)N;
     for(int i=1; i<N-1; i++) {
         D1Arr[i*N+(i-1)] = -1/(2*delta);
@@ -43,6 +44,7 @@ void FillD1(int N, int m, double* D1Arr) {
 }
 
 void FillD2(int N, int m, double* D2Arr) {
+    for(int i=0; i<N*N; i++) D2Arr[i] = 0;
     double delta = 1.0/(double)N;
     double delta2 = pow(delta, 2);
     for(int i=1; i<N-1; i++) {
@@ -53,7 +55,7 @@ void FillD2(int N, int m, double* D2Arr) {
 
     // Lower Boundary:
     double m_term = 1 - pow(-1, m);
-    D2Arr[0*N+0] = -1-m_term/delta2;
+    D2Arr[0*N+0] = (-1-m_term)/delta2;
     D2Arr[0*N+1] = 1/delta2;
 
     // Upper Boundary:
@@ -62,6 +64,7 @@ void FillD2(int N, int m, double* D2Arr) {
 }
 
 void Dtilde(int N, int m, double* ThetaArr, double* Dtilde) {
+    for(int i=0; i<N*N; i++) Dtilde[i] = 0;
     double* D1Arr = (double*)malloc(sizeof(double)*N*N);
     double* D2Arr = (double*)malloc(sizeof(double)*N*N);
 
@@ -73,22 +76,15 @@ void Dtilde(int N, int m, double* ThetaArr, double* Dtilde) {
 
     for(int i=0; i<N; i++) {
         for(int j=0; j<N; j++) {
-            if(i==j) {
-                G0Arr[i*N+i] = 1/ThetaArr[i];
-                G1Arr[i*N+i] = -pow(m, 2)/pow(ThetaArr[i], 2);
-            }
-            else {
-                G0Arr[i*N+j] = 0;
-                G1Arr[i*N+j] = 0;
-            }
+            G0Arr[i*N+j] = 0;
+            G1Arr[i*N+j] = 0;
         }
+        G0Arr[i*N+i] = -pow(m, 2)/pow(ThetaArr[i], 2);
+        G1Arr[i*N+i] = 1/ThetaArr[i];
     }
 
     double* G1D1Arr = (double*)malloc(sizeof(double)*N*N);
-
-    double alpha = 1;
-    double beta = 0;
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, N, N, N, alpha, G1Arr, N, D1Arr, N, beta, G1D1Arr, N);
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, N, N, N, 1.0, G1Arr, N, D1Arr, N, 0.0, G1D1Arr, N);
 
     for(int i=0; i<N; i++) {
         for(int j=0; j<N; j++) {
@@ -247,8 +243,8 @@ void FillG1(double* ThetaArr, int m, int N, int cutoff, double* G1Arr) {
             gsl_integration_workspace *workspace = gsl_integration_workspace_alloc(10000);
             gsl_function F;
             F.function = &IntegrandG1; F.params = &params;
-            gsl_integration_qags(&F, ThetaArr[j]-delta/2, ThetaArr[j], 1e-10, 1e-10, 10000, workspace, &result1, &error);
-            gsl_integration_qags(&F, ThetaArr[j], ThetaArr[j]+delta/2, 1e-10, 1e-10, 10000, workspace, &result2, &error);
+            gsl_integration_qags(&F, ThetaArr[j]-delta/2, ThetaArr[j], 1e-7, 1e-7, 10000, workspace, &result1, &error);
+            gsl_integration_qags(&F, ThetaArr[j], ThetaArr[j]+delta/2, 1e-7, 1e-7, 10000, workspace, &result2, &error);
             gsl_integration_workspace_free(workspace);
             G1Arr[i*N+j] = result1 + result2;
         }
@@ -264,8 +260,8 @@ void FillG0(double* ThetaArr, int m, int N, int cutoff, double* G0Arr) {
             gsl_integration_workspace *workspace = gsl_integration_workspace_alloc(10000);
             gsl_function F;
             F.function = &IntegrandG0; F.params = &params;
-            gsl_integration_qags(&F, ThetaArr[j]-delta/2, ThetaArr[j], 1e-10, 1e-10, 10000, workspace, &result1, &error);
-            gsl_integration_qags(&F, ThetaArr[j], ThetaArr[j]+delta/2, 1e-10, 1e-10, 10000, workspace, &result2, &error);
+            gsl_integration_qags(&F, ThetaArr[j]-delta/2, ThetaArr[j], 1e-7, 1e-7, 10000, workspace, &result1, &error);
+            gsl_integration_qags(&F, ThetaArr[j], ThetaArr[j]+delta/2, 1e-7, 1e-7, 10000, workspace, &result2, &error);
             gsl_integration_workspace_free(workspace);
             G0Arr[i*N+j] = result1 + result2;
         }

@@ -2,28 +2,13 @@
 <project version="4">
   <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
-      <paths name="Remote Host (492dbf8f-a7f2-46e0-aeba-ebed575ab34d)">
+      <paths name="Remote Host (bf632da1-da4f-4585-b0ca-b686d8a355b8)">
         <serverdata>
           <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="Remote Host - Laptop (722ebc7b-7796-4aff-a67d-16bd4c11ee2c)">
-        <serverdata>
-          <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="Remote Host - LaptopZeroTier (c2433df1-43c2-4d37-a773-626e4095a65b)">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/tmp/tmp.FtCqPSyiM7" local="$PROJECT_DIR$" />
+            <mapping deploy="/tmp/tmp.4jVidDPelj" local="$PROJECT_DIR$" />
           </mappings>
           <excludedPaths>
-            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-default-remote-host---laptopzerotier" />
-            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-default-remote-host---laptopzerotier" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-default-remote-host" />
           </excludedPaths>
         </serverdata>
       </paths>
