@@ -135,13 +135,13 @@ static void load_array(const char* filename, double** array, size_t* size) {
 }
 
 __attribute__((constructor)) static void initialize_arrays() {
-    printf("Initializing arrays...\n");
+    printf("Initializing lookup tables...\n");
     load_array("I_m0.txt", &I_m0_table, &I_m0_table_size);
     load_array("I_m1.txt", &I_m1_table, &I_m1_table_size);
 }
 
 __attribute__((destructor)) static void cleanup_arrays() {
-    printf("Cleaning up arrays...\n");
+    printf("Cleaning up lookup tables...\n");
     free(I_m0_table);
     free(I_m1_table);
     I_m0_table = NULL;

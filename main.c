@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include <complex.h>
+#include <string.h>
 
 #include "/opt/intel/oneapi/mkl/2024.2/include/mkl.h"
-#include <gsl/gsl_integration.h>
 
 #include "Constants.h"
 #include "Functions.h"
@@ -14,33 +14,42 @@ void print_matrix(char* desc, MKL_INT m, MKL_INT n, MKL_Complex16* a, MKL_INT ld
 void TransposeMat(MKL_INT N, MKL_Complex16* Mat);
 void SortEigen(MKL_INT N, MKL_Complex16* EVal, MKL_Complex16* EVec);
 void writeArrayToFile(const char* filename, int VecOrMat, int N, MKL_Complex16* Arr);
+MKL_Complex16 multiply_complex(MKL_Complex16 z1, MKL_Complex16 z2);
+void FillStrings(int N, int m, int cutoff, double EF, double omega, double gamma, double radius, char* filename_EVal, char* filename_EVec, char* filename_CD, size_t size);
 
-int main() {
-    int N = 100;
-    int m = 1;
-    int cutoff = 100;
+int main(int argc, char** argv) {
+    if(argc != 8) {
+        printf("Recheck arguments!\n");
+        return 1;
+    }
 
-    const char *filename = "output.txt";
+    int N = atoi(argv[1]);
+    int m = atoi(argv[2]);
+    int cutoff = atoi(argv[3]);
+    double EF = atof(argv[4])/au_eV;
+    double omega = atof(argv[5])/au_eV;
+    double gamma = atof(argv[6])/au_eV;
+    double radius = atof(argv[7])/au_nm;
 
-    double* ThetaArr = (double*)malloc(sizeof(double)*N);
-    FillTheta(N, ThetaArr);
-
-    double* MArr = (double*)malloc(sizeof(double)*N*N);
-
-    FillM(N, m, ThetaArr, cutoff, MArr);
-
-    double EF = 0.36/au_eV;
-    double omega = 0.2/au_eV;
-    double gamma = 0.02/au_eV;
-    double radius = 25/au_nm;
+    printf("N=%d, m=%d, cutoff=%d, EF=%f, omega=%f, gamma=%f, radius=%f\n", N, m, cutoff, EF*au_eV, omega*au_eV, gamma*au_eV, radius*au_nm);
 
     MKL_Complex16 eta;
     eta.real = creal(I*Drude(EF, omega, gamma)/(omega*radius));
     eta.imag = cimag(I*Drude(EF, omega, gamma)/(omega*radius));
 
-    MKL_INT n = N, lda = N, ldvl = N, ldvr = N, info;
+    char filename_EVal[512];
+    char filename_EVec[512];
+    char filename_CD[512];
+    FillStrings(N, m, cutoff, EF, omega, gamma, radius, filename_EVal, filename_EVec, filename_CD, sizeof(filename_EVal));
+
+    double* ThetaArr = (double*)malloc(sizeof(double)*N);
+    FillTheta(N, ThetaArr);
+
+    double* MArr = (double*)malloc(sizeof(double)*N*N);
+    FillM(N, m, ThetaArr, cutoff, MArr);
 
     // Arrays for EVals, left EVecs, right EVecs and the matrix
+    MKL_INT n = N, lda = N, ldvl = N, ldvr = N, info;
     MKL_Complex16 w[N], vl[N*N], vr[N*N], a[N*N];
 
     for(int i=0; i<N; i++) {
@@ -65,18 +74,18 @@ int main() {
     TransposeMat(N, vr);
     SortEigen(N, w, vr);
 
-    /* Print eigenvalues and left and right eigenvectors */
-    for(int i=0; i<5; i++) printf("Eigenvalues:\n%f+%f\n", w[i].real, w[i].imag);
-    printf("Eigenvectors:\n");
-    for(int i=0; i<5; i++) {
-        for(int j=0; j<N; j++) printf("%f+%f, ", vr[i*N+j].real, vr[i*N+j].imag);
-        printf("\n");
-    }
-    // print_matrix("Eigenvalues", 1, n, w, 1);
-    // print_matrix("Left eigenvectors", n, n, vl, ldvl);
-    // print_matrix("Right eigenvectors", n, n, vr, ldvr);
+    writeArrayToFile(filename_EVal, 0, N, w);
+    writeArrayToFile(filename_EVec, 1, N, vr);
 
-    writeArrayToFile(filename, 1, N, vr);
+    // THIS IS NOT CORRECT YET, I FIRST NEED TO APPLY THE DTILDE MATRIX!!!!!
+    // To save on computation time I should not do this for all EVecs, but maybe for the first 10
+
+    for(int i=0; i<N*N; i++) {
+        MKL_Complex16 res = multiply_complex(vr[i], eta);
+        vr[i].real = res.real; vr[i].imag = res.imag;
+    }
+
+    writeArrayToFile(filename_CD, 1, N, vr);
 
     // free(a);
     exit(0);
@@ -157,97 +166,37 @@ void writeArrayToFile(const char* filename, int VecOrMat, int N, MKL_Complex16* 
     fclose(file);
 }
 
+MKL_Complex16 multiply_complex(MKL_Complex16 z1, MKL_Complex16 z2) {
+    MKL_Complex16 result;
+    result.real = z1.real * z2.real - z1.imag * z2.imag;
+    result.imag = z1.real * z2.imag + z1.imag * z2.real;
+    return result;
+}
 
-// MKL_Complex16* a = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N*N);
-// a[0].real = -3.84; a[0].imag =  2.25;
-// a[1].real = -8.94; a[1].imag = -4.75;
-// a[2].real =  8.95; a[2].imag = -6.53;
-// a[3].real = -9.87; a[3].imag =  4.82;
-// a[4].real = -0.66; a[4].imag =  0.83;
-// a[5].real = -4.40; a[5].imag = -3.82;
-// a[6].real = -3.50; a[6].imag = -4.26;
-// a[7].real = -3.15; a[7].imag =  7.36;
-// a[8].real = -3.99; a[8].imag = -4.73;
-// a[9].real = -5.88; a[9].imag = -6.60;
-// a[10].real = -3.36; a[10].imag = -0.40;
-// a[11].real = -0.75; a[11].imag =  5.23;
-// a[12].real =  7.74; a[12].imag =  4.18;
-// a[13].real =  3.66; a[13].imag = -7.53;
-// a[14].real =  2.58; a[14].imag =  3.60;
-// a[15].real =  4.59; a[15].imag =  5.41;
+void FillStrings(
+    int N, int m, int cutoff,
+    double EF, double omega, double gamma, double radius,
+    char* filename_EVal, char* filename_EVec, char* filename_CD,
+    size_t size){
+    char params[256];
+    snprintf(params, sizeof(params),
+             "N%d"
+             "m%d"
+             "cutoff%d"
+             "EF%.2f"
+             "omega%.2f"
+             "gamma%.2f"
+             "radius%.2f",
+             N, m, cutoff, EF*au_eV, omega*au_eV, gamma*au_eV, radius*au_nm);
 
+    // Replace '.' with '_'
+    for (char* p = params; *p; ++p) {
+        if (*p == '.') {
+            *p = '_';
+        }
+    }
 
-// int main(void) {
-//     // int N = 3;
-//     // int cutoff = 100;
-//     //
-//     // double* ThetaArr = (double*)malloc(sizeof(double)*N);
-//     // FillTheta(N, ThetaArr);
-//     //
-//     // double* M_m0 = (double*)malloc(sizeof(double)*N*N);
-//     // // double* M_m1 = (double*)malloc(sizeof(double)*N*N);
-//     //
-//     // FillM(N, 0, ThetaArr, cutoff, M_m0);
-//     // // FillM(N, 1, ThetaArr, cutoff, M_m1);
-//     //
-//     // double EF = 0.36/au_eV;
-//     // double omega = 0.2/au_eV;
-//     // double gamma = 0.02/au_eV;
-//     // double a = 25/au_nm;
-//     //
-//     // double complex eta = I*Drude(EF, omega, gamma)/(omega*a);
-//     //
-//     // for(int i=0; i<N*N; i++) {
-//     //     M_m0[i] = eta*M_m0[i];
-//     //     // M_m1[i] = eta*M_m1[i];
-//     // }
-//     //
-//     // double eigenvalues[N];
-//     // MKL_INT n = N, lda = N, info;
-//     // info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, M_m0, lda, eigenvalues);
-//     //
-//     // if (info > 0) {
-//     //     printf("The algorithm failed to compute eigenvalues.\n");
-//     //     return 1;
-//     // }
-//     //
-//     // for (int i = 0; i < n - 1; i++) {
-//     //     for (int j = 0; j < n - i - 1; j++) {
-//     //         if (eigenvalues[j] > eigenvalues[j + 1]) {
-//     //             // Swap eigenvalues
-//     //             double temp_val = eigenvalues[j];
-//     //             eigenvalues[j] = eigenvalues[j + 1];
-//     //             eigenvalues[j + 1] = temp_val;
-//     //
-//     //             // Swap corresponding eigenvectors
-//     //             for (int k = 0; k < n; k++) {
-//     //                 double temp_vec = M_m0[k + j * lda];
-//     //                 M_m0[k + j * lda] = M_m0[k + (j + 1) * lda];
-//     //                 M_m0[k + (j + 1) * lda] = temp_vec;
-//     //             }
-//     //         }
-//     //     }
-//     // }
-//     //
-//     // double complex eigenvalues_c[N];
-//     // for(int i=0; i<N; i++) eigenvalues_c[i] = eta*eigenvalues[i];
-//     //
-//     // printf("Eigenvalues:\n");
-//     // for (int i = 0; i < n; i++) {
-//     //     printf("%lf+%lf\n", creal(eigenvalues_c[i]), cimag(eigenvalues_c[i]));
-//     // }
-//     //
-//     // printf("Eigenvectors (scaled):\n");
-//     // for (int i = 0; i < n; i++) {
-//     //     for (int j = 0; j < n; j++) {
-//     //         printf("%lf ", M_m0[j + i * lda]);
-//     //     }
-//     //     printf("\n");
-//     // }
-//     //
-//     // free(ThetaArr);
-//     // free(M_m0);
-//     // // free(M_m1);
-//
-//     return 0;
-// }
+    snprintf(filename_EVal, size, "EVal_%s.txt", params);
+    snprintf(filename_EVec, size, "EVec_%s.txt", params);
+    snprintf(filename_CD, size, "CD___%s.txt", params);
+}
