@@ -15,17 +15,16 @@ void TransposeMat(MKL_INT N, MKL_Complex16* Mat);
 void SortEigen(MKL_INT N, MKL_Complex16* EVal, MKL_Complex16* EVec);
 
 int main() {
-    int N = 4;
+    int N = 100;
+    int m = 1;
     int cutoff = 100;
 
     double* ThetaArr = (double*)malloc(sizeof(double)*N);
     FillTheta(N, ThetaArr);
 
-    double* M_m0 = (double*)malloc(sizeof(double)*N*N);
-    // double* M_m1 = (double*)malloc(sizeof(double)*N*N);
+    double* MArr = (double*)malloc(sizeof(double)*N*N);
 
-    FillM(N, 0, ThetaArr, cutoff, M_m0);
-    // FillM(N, 1, ThetaArr, cutoff, M_m1);
+    FillM(N, m, ThetaArr, cutoff, MArr);
 
     double EF = 0.36/au_eV;
     double omega = 0.2/au_eV;
@@ -43,14 +42,12 @@ int main() {
 
     for(int i=0; i<N; i++) {
         for(int j=0; j<N; j++) {
-            a[i*N+j].real = eta.real * M_m0[i*N+j]; a[i*N+j].imag = eta.imag * M_m0[i*N+j];
-            // a[i*N+j].real = eta.real * M_m1[i*N+j]; a[i*N+j].imag = eta.imag * M_m1[i*N+j];
+            a[i*N+j].real = eta.real * MArr[i*N+j]; a[i*N+j].imag = eta.imag * MArr[i*N+j];
         }
     }
 
     free(ThetaArr);
-    free(M_m0);
-    // free(M_m1);
+    free(MArr);
 
     /* Solve eigenproblem */
     info = LAPACKE_zgeev(LAPACK_ROW_MAJOR, 'V', 'V', n, a, lda, w, vl, ldvl, vr, ldvr);
@@ -66,9 +63,15 @@ int main() {
     SortEigen(N, w, vr);
 
     /* Print eigenvalues and left and right eigenvectors */
-    print_matrix("Eigenvalues", 1, n, w, 1);
+    for(int i=0; i<5; i++) printf("Eigenvalues:\n%f+%f\n", w[i].real, w[i].imag);
+    printf("Eigenvectors:\n");
+    for(int i=0; i<5; i++) {
+        for(int j=0; j<N; j++) printf("%f+%f, ", vr[i*N+j].real, vr[i*N+j].imag);
+        printf("\n");
+    }
+    // print_matrix("Eigenvalues", 1, n, w, 1);
     // print_matrix("Left eigenvectors", n, n, vl, ldvl);
-    print_matrix("Right eigenvectors", n, n, vr, ldvr);
+    // print_matrix("Right eigenvectors", n, n, vr, ldvr);
 
     // free(a);
     exit(0);
