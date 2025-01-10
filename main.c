@@ -13,11 +13,14 @@ void PrintArr(int N, double* Arr);
 void print_matrix(char* desc, MKL_INT m, MKL_INT n, MKL_Complex16* a, MKL_INT lda);
 void TransposeMat(MKL_INT N, MKL_Complex16* Mat);
 void SortEigen(MKL_INT N, MKL_Complex16* EVal, MKL_Complex16* EVec);
+void writeArrayToFile(const char* filename, int VecOrMat, int N, MKL_Complex16* Arr);
 
 int main() {
     int N = 100;
     int m = 1;
     int cutoff = 100;
+
+    const char *filename = "output.txt";
 
     double* ThetaArr = (double*)malloc(sizeof(double)*N);
     FillTheta(N, ThetaArr);
@@ -73,6 +76,8 @@ int main() {
     // print_matrix("Left eigenvectors", n, n, vl, ldvl);
     // print_matrix("Right eigenvectors", n, n, vr, ldvr);
 
+    writeArrayToFile(filename, 1, N, vr);
+
     // free(a);
     exit(0);
 }
@@ -124,6 +129,32 @@ void print_matrix(char* desc, MKL_INT m, MKL_INT n, MKL_Complex16* a, MKL_INT ld
 void PrintArr(int N, double* Arr) {
     for(int i=0; i<N; i++) printf("%f, ", Arr[i]);
     printf("\n");
+}
+
+void writeArrayToFile(const char* filename, int VecOrMat, int N, MKL_Complex16* Arr) {
+    FILE* file = fopen(filename, "w");
+    if(file == NULL) {
+        perror("Error opening file");
+        return;
+    }
+
+    if(VecOrMat == 0) {
+        for(int i=0; i<N; i++) {
+            fprintf(file, "%.7f+%.7f", Arr[i].real, Arr[i].imag);
+            if(i < N-1) fprintf(file, "\n");
+        }
+    }
+    else {
+        for(int i=0; i<N; i++) {
+            for(int j=0; j<N; j++) {
+                fprintf(file, "%.7f+%.7f", Arr[i*N+j].real, Arr[i*N+j].imag);
+                if(j < N-1) fprintf(file, ", ");
+            }
+            fprintf(file, "\n");
+        }
+    }
+
+    fclose(file);
 }
 
 
