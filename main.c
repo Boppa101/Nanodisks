@@ -9,29 +9,18 @@
 #include "Constants.h"
 #include "Functions.h"
 
-void PrintArr(int N, double* Arr) {
-    for(int i=0; i<N; i++) printf("%f, ", Arr[i]);
-    printf("\n");
-}
+void PrintArr(int N, double* Arr);
+void print_matrix(char* desc, MKL_INT m, MKL_INT n, MKL_Complex16* a, MKL_INT lda);
+void TransposeMat(MKL_INT N, MKL_Complex16* Mat);
 
-/* Auxiliary routines prototypes */
-extern void print_matrix( char* desc, MKL_INT m, MKL_INT n, MKL_Complex16* a, MKL_INT lda );
-
-/* Parameters */
-// #define N 4
-// #define LDA N
-// #define LDVL N
-// #define LDVR N
-
-/* Main program */
 int main() {
     int N = 4;
     int LDA = N;
     int LDVL = N;
     int LDVR = N;
-    /* Locals */
+
     MKL_INT n = N, lda = LDA, ldvl = LDVL, ldvr = LDVR, info;
-    /* Local arrays */
+
     MKL_Complex16 w[N], vl[LDVL*N], vr[LDVR*N];
     MKL_Complex16* a = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N*N);
     a[0].real = -3.84; a[0].imag =  2.25;
@@ -51,39 +40,55 @@ int main() {
     a[14].real =  2.58; a[14].imag =  3.60;
     a[15].real =  4.59; a[15].imag =  5.41;
 
-    /* Executable statements */
-    printf( "LAPACKE_zgeev (row-major, high-level) Example Program Results\n" );
-
     /* Solve eigenproblem */
-    info = LAPACKE_zgeev( LAPACK_ROW_MAJOR, 'V', 'V', n, a, lda, w, vl, ldvl, vr, ldvr );
+    info = LAPACKE_zgeev(LAPACK_ROW_MAJOR, 'V', 'V', n, a, lda, w, vl, ldvl, vr, ldvr);
 
     /* Check for convergence */
     if( info > 0 ) {
-        printf( "The algorithm failed to compute eigenvalues.\n" );
+        printf("The algorithm failed to compute eigenvalues.\n");
         exit( 1 );
     }
 
     /* Print eigenvalues */
-    print_matrix( "Eigenvalues", 1, n, w, 1 );
+    print_matrix("Eigenvalues", 1, n, w, 1);
 
     /* Print left eigenvectors */
-    print_matrix( "Left eigenvectors", n, n, vl, ldvl );
+    // print_matrix("Left eigenvectors", n, n, vl, ldvl);
 
     /* Print right eigenvectors */
-    print_matrix( "Right eigenvectors", n, n, vr, ldvr );
-    free(a);
-    exit( 0 );
-} /* End of LAPACKE_zgeev Example */
+    // A given Eigevector is saved in one COLLUMN -> I transpose to have them in rows
+    TransposeMat(N, vr);
+    print_matrix("Right eigenvectors", n, n, vr, ldvr);
 
-/* Auxiliary routine: printing a matrix */
-void print_matrix( char* desc, MKL_INT m, MKL_INT n, MKL_Complex16* a, MKL_INT lda ) {
-    MKL_INT i, j;
-    printf( "\n %s\n", desc );
-    for( i = 0; i < m; i++ ) {
-        for( j = 0; j < n; j++ )
-            printf( " (%6.2f,%6.2f)", a[i*lda+j].real, a[i*lda+j].imag );
-        printf( "\n" );
+    free(a);
+    exit(0);
+}
+
+void TransposeMat(MKL_INT N, MKL_Complex16* Mat) {
+    printf("\n");
+    for(MKL_INT i=0; i<N; i++) {
+        for(MKL_INT j=i+1; j<N; j++) {
+            MKL_Complex16 temp;
+            temp.real = Mat[i*N+j].real; temp.imag = Mat[i*N+j].imag;
+            Mat[i*N+j].real = Mat[j*N+i].real; Mat[i*N+j].imag = Mat[j*N+i].imag;
+            Mat[j*N+i].real = temp.real; Mat[j*N+i].imag = temp.imag;
+        }
     }
+}
+
+void print_matrix(char* desc, MKL_INT m, MKL_INT n, MKL_Complex16* a, MKL_INT lda) {
+    MKL_INT i, j;
+    printf("\n %s\n", desc);
+    for(i=0; i<m; i++) {
+        for(j=0; j<n; j++)
+            printf(" (%.2f, %.2f)", a[i*lda+j].real, a[i*lda+j].imag);
+        printf("\n");
+    }
+}
+
+void PrintArr(int N, double* Arr) {
+    for(int i=0; i<N; i++) printf("%f, ", Arr[i]);
+    printf("\n");
 }
 
 // FillTheta(N, ThetaArr);
