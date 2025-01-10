@@ -7,7 +7,7 @@ double complex Drude(double EF, double omega, double gamma);
 
 void FillD1(int N, int m, double* D1Arr);
 void FillD2(int N, int m, double* D2Arr);
-void Dtilde(int N, int m, double* ThetaArr, double* Dtilde);
+void Dtilde(int N, int m, double* ThetaArr, double* DArr);
 
 double g_m(double x, int cutoff, int m);
 

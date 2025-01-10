@@ -63,8 +63,7 @@ void FillD2(int N, int m, double* D2Arr) {
     D2Arr[(N-1)*N+(N-1)] = -1/delta2;
 }
 
-void Dtilde(int N, int m, double* ThetaArr, double* Dtilde) {
-    for(int i=0; i<N*N; i++) Dtilde[i] = 0;
+void Dtilde(int N, int m, double* ThetaArr, double* DArr) {
     double* D1Arr = (double*)malloc(sizeof(double)*N*N);
     double* D2Arr = (double*)malloc(sizeof(double)*N*N);
 
@@ -88,7 +87,7 @@ void Dtilde(int N, int m, double* ThetaArr, double* Dtilde) {
 
     for(int i=0; i<N; i++) {
         for(int j=0; j<N; j++) {
-            Dtilde[i*N+j] = D2Arr[i*N+j] + G1D1Arr[i*N+j] + G0Arr[i*N+j];
+            DArr[i*N+j] = D2Arr[i*N+j] + G1D1Arr[i*N+j] + G0Arr[i*N+j];
         }
     }
 

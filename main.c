@@ -48,6 +48,9 @@ int main(int argc, char** argv) {
     double* MArr = (double*)malloc(sizeof(double)*N*N);
     FillM(N, m, ThetaArr, cutoff, MArr);
 
+    double* DArr = (double*)malloc(sizeof(double)*N*N);
+    Dtilde(N, m, ThetaArr, DArr);
+
     // Arrays for EVals, left EVecs, right EVecs and the matrix
     MKL_INT n = N, lda = N, ldvl = N, ldvr = N, info;
     MKL_Complex16 w[N], vl[N*N], vr[N*N], a[N*N];
@@ -74,10 +77,20 @@ int main(int argc, char** argv) {
     TransposeMat(N, vr);
     SortEigen(N, w, vr);
 
+    // Maybe extend this function so I ca specify the amount of lines to write -> Never use all 100 EVecs/CD
     writeArrayToFile(filename_EVal, 0, N, w);
     writeArrayToFile(filename_EVec, 1, N, vr);
 
-    // THIS IS NOT CORRECT YET, I FIRST NEED TO APPLY THE DTILDE MATRIX!!!!!
+    MKL_Complex16 DArr_c[N*N];
+    for(int i=0; i<N*N; i++) {
+        DArr_c[i].real = DArr; DArr_c[i].imag = 0;
+    }
+
+    for(int i=0; i<10; i++) {
+        // Multply DArr_c with vr[i] and save that in vr[i]
+        // Basically write a function that takes a matrix and vector and saves the product in the vector
+        // BE CAREFUL NOT TO OVERWRITE STUFF!!!
+    }
     // To save on computation time I should not do this for all EVecs, but maybe for the first 10
 
     for(int i=0; i<N*N; i++) {
@@ -85,9 +98,10 @@ int main(int argc, char** argv) {
         vr[i].real = res.real; vr[i].imag = res.imag;
     }
 
+    // Maybe extend this function so I ca specify the amount of lines to write -> Never use all 100 EVecs/CD
     writeArrayToFile(filename_CD, 1, N, vr);
 
-    // free(a);
+    free(DArr);
     exit(0);
 }
 
