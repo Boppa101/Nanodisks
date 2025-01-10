@@ -18,38 +18,60 @@ void PrintArr(int N, double* Arr) {
 extern void print_matrix( char* desc, MKL_INT m, MKL_INT n, MKL_Complex16* a, MKL_INT lda );
 
 /* Parameters */
-#define N 4
-#define LDA N
-#define LDVL N
-#define LDVR N
+// #define N 4
+// #define LDA N
+// #define LDVL N
+// #define LDVR N
 
 /* Main program */
 int main() {
+    int N = 4;
+    int LDA = N;
+    int LDVL = N;
+    int LDVR = N;
     /* Locals */
     MKL_INT n = N, lda = LDA, ldvl = LDVL, ldvr = LDVR, info;
     /* Local arrays */
     MKL_Complex16 w[N], vl[LDVL*N], vr[LDVR*N];
-    MKL_Complex16 a[LDA*N] = {
-        {-3.84,  2.25}, {-8.94, -4.75}, { 8.95, -6.53}, {-9.87,  4.82},
-        {-0.66,  0.83}, {-4.40, -3.82}, {-3.50, -4.26}, {-3.15,  7.36},
-        {-3.99, -4.73}, {-5.88, -6.60}, {-3.36, -0.40}, {-0.75,  5.23},
-        { 7.74,  4.18}, { 3.66, -7.53}, { 2.58,  3.60}, { 4.59,  5.41}
-    };
+    MKL_Complex16* a = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N*N);
+    a[0].real = -3.84; a[0].imag =  2.25;
+    a[1].real = -8.94; a[1].imag = -4.75;
+    a[2].real =  8.95; a[2].imag = -6.53;
+    a[3].real = -9.87; a[3].imag =  4.82;
+    a[4].real = -0.66; a[4].imag =  0.83;
+    a[5].real = -4.40; a[5].imag = -3.82;
+    a[6].real = -3.50; a[6].imag = -4.26;
+    a[7].real = -3.15; a[7].imag =  7.36;
+    a[8].real = -3.99; a[8].imag = -4.73;
+    a[9].real = -5.88; a[9].imag = -6.60;
+    a[10].real = -3.36; a[10].imag = -0.40;
+    a[11].real = -0.75; a[11].imag =  5.23;
+    a[12].real =  7.74; a[12].imag =  4.18;
+    a[13].real =  3.66; a[13].imag = -7.53;
+    a[14].real =  2.58; a[14].imag =  3.60;
+    a[15].real =  4.59; a[15].imag =  5.41;
+
     /* Executable statements */
     printf( "LAPACKE_zgeev (row-major, high-level) Example Program Results\n" );
+
     /* Solve eigenproblem */
     info = LAPACKE_zgeev( LAPACK_ROW_MAJOR, 'V', 'V', n, a, lda, w, vl, ldvl, vr, ldvr );
+
     /* Check for convergence */
     if( info > 0 ) {
         printf( "The algorithm failed to compute eigenvalues.\n" );
         exit( 1 );
     }
+
     /* Print eigenvalues */
     print_matrix( "Eigenvalues", 1, n, w, 1 );
+
     /* Print left eigenvectors */
     print_matrix( "Left eigenvectors", n, n, vl, ldvl );
+
     /* Print right eigenvectors */
     print_matrix( "Right eigenvectors", n, n, vr, ldvr );
+    free(a);
     exit( 0 );
 } /* End of LAPACKE_zgeev Example */
 

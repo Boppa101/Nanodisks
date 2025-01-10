@@ -19,7 +19,7 @@
       <paths name="Remote Host - LaptopZeroTier (c2433df1-43c2-4d37-a773-626e4095a65b)">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/tmp.431xEJJyyl" local="$PROJECT_DIR$" />
+            <mapping deploy="/home/paul-linux/Masterarbeit/Programming/Geometries/Nanodisks/LaptopWW" local="$PROJECT_DIR$" />
           </mappings>
           <excludedPaths>
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-default-remote-host---laptopzerotier" />
