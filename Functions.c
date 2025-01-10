@@ -292,31 +292,3 @@ void FillM(int N, int m, double* ThetaArr, int cutoff, double* MArr) {
     free(D2Arr);
     free(G0Arr);
 }
-
-
-
-// double integrand(double x, void *params) {
-//     // Integrand of the temp.-dep. conductivity model; is called by "integration()"
-//     params_integration *p = (params_integration *)params;
-//     double EF = p->EF;
-//     double KT = p->KT;
-//     double fct = p->fct;
-//     double w = p->w;
-//     return (H(x, EF, KT) - H(fct, EF, KT))/(pow(w, 2.0) - 4*pow(x, 2.0));
-// }
-//
-// double complex integration(double EF, double KT, double fct, double w, double start, double end) {
-//     // Function to perform the integration needed in the local temp.-dep. conductivity model
-//     gsl_integration_workspace *work = gsl_integration_workspace_alloc(10000);
-//     double result;
-//     double error;
-//
-//     params_integration params = {EF, 0, w, 0, 0, KT, fct};
-//     gsl_function F;
-//     F.function = &integrand;
-//     F.params = &params;
-//     gsl_integration_qags(&F, start, end, 1e-7, 1e-7, 10000, work, &result, &error);
-//     gsl_integration_workspace_free(work);
-//
-//     return result;
-// }
