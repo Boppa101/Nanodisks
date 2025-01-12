@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.22.1)
 project(CCode C)
 
-set(CMAKE_C_STANDARD 99) #11
+#set(CMAKE_C_STANDARD 99) #11
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
-#include_directories("/opt/intel/oneapi/mkl/latest/include")
-#link_directories("/opt/intel/oneapi/mkl/latest/lib")
+include_directories("../../opt/intel/oneapi/mkl/latest/include")
 set(CMAKE_PREFIX_PATH "/opt/intel/oneapi/mkl/latest/lib/cmake")
 find_package(MKL REQUIRED)
 
@@ -20,8 +21,7 @@ add_executable(Tests Tests.c
         Functions.c
         Functions.h)
 
+add_compile_definitions(I=_Complex_I)
+
 target_link_libraries(CCode m gsl gslcblas MKL::MKL)
 target_link_libraries(Tests m gsl gslcblas MKL::MKL)
-
-#target_include_directories(CCode PRIVATE "/opt/intel/oneapi/mkl/latest/include")
-#target_include_directories(Tests PRIVATE "/opt/intel/oneapi/mkl/latest/include")

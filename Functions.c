@@ -5,7 +5,7 @@
 
 #include "Functions.h"
 
-#include "/opt/intel/oneapi/mkl/2024.2/include/mkl.h"
+#include "../../opt/intel/oneapi/mkl/2024.2/include/mkl.h"
 #include <gsl/gsl_integration.h>
 
 // This file contains most of the functions used in main.c, Tests.c and
@@ -17,7 +17,7 @@ void FillTheta(int N, double* ThetaArr) {
     for(int i=0; i<N; i++) ThetaArr[i] = 0.5*1/(double)N+(double)i/N;
 }
 
-void phi_ext(int N, double* ThetaArr, double a, double* phi_extArr) {
+void phi_ext(int N, const double* ThetaArr, double a, double* phi_extArr) {
     for(int i=0; i<N; i++) phi_extArr[i] = -a/2 * ThetaArr[i];
 }
 
@@ -63,15 +63,20 @@ void FillD2(int N, int m, double* D2Arr) {
     D2Arr[(N-1)*N+(N-1)] = -1/delta2;
 }
 
-void Dtilde(int N, int m, double* ThetaArr, double* DArr) {
+void Dtilde(int N, int m, const double* ThetaArr, double* DArr) {
     double* D1Arr = (double*)malloc(sizeof(double)*N*N);
     double* D2Arr = (double*)malloc(sizeof(double)*N*N);
+    double* G0Arr = (double*)malloc(sizeof(double)*N*N);
+    double* G1Arr = (double*)malloc(sizeof(double)*N*N);
+    double* G1D1Arr = (double*)malloc(sizeof(double)*N*N);
+
+    if(D1Arr==NULL || D2Arr==NULL || G0Arr==NULL || G1Arr==NULL || G1D1Arr==NULL) {
+        printf("Error initialising matrices in Dtilde!\n");
+        return;
+    }
 
     FillD1(N, m, D1Arr);
     FillD2(N, m, D2Arr);
-
-    double* G0Arr = (double*)malloc(sizeof(double)*N*N);
-    double* G1Arr = (double*)malloc(sizeof(double)*N*N);
 
     for(int i=0; i<N; i++) {
         for(int j=0; j<N; j++) {
@@ -82,7 +87,6 @@ void Dtilde(int N, int m, double* ThetaArr, double* DArr) {
         G1Arr[i*N+i] = 1/ThetaArr[i];
     }
 
-    double* G1D1Arr = (double*)malloc(sizeof(double)*N*N);
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, N, N, N, 1.0, G1Arr, N, D1Arr, N, 0.0, G1D1Arr, N);
 
     for(int i=0; i<N; i++) {
@@ -134,13 +138,13 @@ static void load_array(const char* filename, double** array, size_t* size) {
 }
 
 __attribute__((constructor)) static void initialize_arrays() {
-    printf("Initializing lookup tables...\n");
+    // printf("Initializing lookup tables...\n");
     load_array("I_m0.txt", &I_m0_table, &I_m0_table_size);
     load_array("I_m1.txt", &I_m1_table, &I_m1_table_size);
 }
 
 __attribute__((destructor)) static void cleanup_arrays() {
-    printf("Cleaning up lookup tables...\n");
+    // printf("Cleaning up lookup tables...\n");
     free(I_m0_table);
     free(I_m1_table);
     I_m0_table = NULL;
@@ -187,7 +191,7 @@ typedef struct {
     int cutoff;
 } params_integration;
 
-double IntegrandG2(double x, void *params) {//, int m, double Theta_j, double Theta_i, int cutoff) {
+double IntegrandG2(double x, void *params) {
     params_integration *p = (params_integration *)params;
     int m = p->m;
     double Theta_j = p->Theta_j;
@@ -197,7 +201,7 @@ double IntegrandG2(double x, void *params) {//, int m, double Theta_j, double Th
     return 1/L * g_m(S/L, cutoff, m) * (x + x-Theta_j - pow(m, 2) * pow(x-Theta_j, 2)/(2*x));
 }
 
-double IntegrandG1(double x, void *params) {//, int m, double Theta_j, double Theta_i, int cutoff) {
+double IntegrandG1(double x, void *params) {
     params_integration *p = (params_integration *)params;
     int m = p->m;
     double Theta_j = p->Theta_j;
@@ -207,17 +211,17 @@ double IntegrandG1(double x, void *params) {//, int m, double Theta_j, double Th
     return 1/L * g_m(S/L, cutoff, m) * (1 - pow(m, 2) * (x-Theta_j)/x);
 }
 
-double IntegrandG0(double x, void *params) {//, int m, double Theta_j, double Theta_i, int cutoff) {
+double IntegrandG0(double x, void *params) {
     params_integration *p = (params_integration *)params;
     int m = p->m;
-    double Theta_j = p->Theta_j;
+    // double Theta_j = p->Theta_j;
     double Theta_i = p->Theta_i;
     int cutoff = p->cutoff;
     double S = fmin(Theta_i, x); double L = fmax(Theta_i, x);
     return -pow(m, 2)/(L*x) * g_m(S/L, cutoff, m);
 }
 
-void FillG2(double* ThetaArr, int m, int N, int cutoff, double* G2Arr) {
+void FillG2(const double* ThetaArr, int m, int N, int cutoff, double* G2Arr) {
     double delta = 1/(double)N;
     for(int i=0; i<N; i++) {
         for(int j=0; j<N; j++) {
@@ -234,7 +238,7 @@ void FillG2(double* ThetaArr, int m, int N, int cutoff, double* G2Arr) {
     }
 }
 
-void FillG1(double* ThetaArr, int m, int N, int cutoff, double* G1Arr) {
+void FillG1(const double* ThetaArr, int m, int N, int cutoff, double* G1Arr) {
     double delta = 1/(double)N;
     for(int i=0; i<N; i++) {
         for(int j=0; j<N; j++) {
@@ -251,7 +255,7 @@ void FillG1(double* ThetaArr, int m, int N, int cutoff, double* G1Arr) {
     }
 }
 
-void FillG0(double* ThetaArr, int m, int N, int cutoff, double* G0Arr) {
+void FillG0(const double* ThetaArr, int m, int N, int cutoff, double* G0Arr) {
     double delta = 1/(double)N;
     for(int i=0; i<N; i++) {
         for(int j=0; j<N; j++) {
@@ -268,21 +272,27 @@ void FillG0(double* ThetaArr, int m, int N, int cutoff, double* G0Arr) {
     }
 }
 
-void FillM(int N, int m, double* ThetaArr, int cutoff, double* MArr) {
+void FillM(const int N, const int m, const double* ThetaArr, const int cutoff, double* MArr) {
     double* D1Arr = (double*)malloc(sizeof(double)*N*N);
-    FillD1(N, m, D1Arr);
     double* D2Arr = (double*)malloc(sizeof(double)*N*N);
-    FillD2(N, m, D2Arr);
     double* G0Arr = (double*)malloc(sizeof(double)*N*N);
-    FillG0(ThetaArr, m, N, cutoff, G0Arr);
     double* G1Arr = (double*)malloc(sizeof(double)*N*N);
-    FillG1(ThetaArr, m, N, cutoff, G1Arr);
     double* G2Arr = (double*)malloc(sizeof(double)*N*N);
+    double* G2D2Arr = (double*)malloc(sizeof(double)*N*N);
+    double* G1D1Arr = (double*)malloc(sizeof(double)*N*N);
+
+    if(D1Arr==NULL || D2Arr==NULL || G0Arr==NULL || G1Arr==NULL || G2Arr==NULL || G2D2Arr==NULL || G1D1Arr==NULL) {
+        printf("Error initialising matrices in FillM!\n");
+        return;
+    }
+
+    FillD1(N, m, D1Arr);
+    FillD2(N, m, D2Arr);
+    FillG0(ThetaArr, m, N, cutoff, G0Arr);
+    FillG1(ThetaArr, m, N, cutoff, G1Arr);
     FillG2(ThetaArr, m, N, cutoff, G2Arr);
 
-    double* G2D2Arr = (double*)malloc(sizeof(double)*N*N);
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, N, N, N, 1, G2Arr, N, D2Arr, N, 0, G2D2Arr, N);
-    double* G1D1Arr = (double*)malloc(sizeof(double)*N*N);
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, N, N, N, 1, G1Arr, N, D1Arr, N, 0, G1D1Arr, N);
 
     for(int i=0; i<N*N; i++) MArr[i] = G2D2Arr[i] + G1D1Arr[i] + G0Arr[i];
@@ -290,4 +300,8 @@ void FillM(int N, int m, double* ThetaArr, int cutoff, double* MArr) {
     free(D1Arr);
     free(D2Arr);
     free(G0Arr);
+    free(G1Arr);
+    free(G2Arr);
+    free(G2D2Arr);
+    free(G1D1Arr);
 }
