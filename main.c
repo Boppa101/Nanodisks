@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <complex.h>
+#include <tgmath.h>
 
 #include "../../opt/intel/oneapi/mkl/2024.2/include/mkl.h"
 
@@ -99,10 +100,14 @@ int main(const int argc, char** argv) {
         DArr_c[i].real = DArr[i]; DArr_c[i].imag = 0;
     }
 
+    MKL_Complex16 EVeci[N];
+    MKL_Complex16 CDVec[N];
+    double complex alpha = 0.0 + 0.0*I;
     for(int i=0; i<10; i++) {
-        // Multply DArr_c with vr[i] and save that in vr[i]
-        // Basically write a function that takes a matrix and vector and saves the product in the vector
-        // BE CAREFUL NOT TO OVERWRITE STUFF!!!
+        for(int j=0; j<N; j++) {
+            EVeci[i] = EVecsr[i*N+j];
+        }
+        cblas_zgemv(CblasRowMajor, CblasNoTrans, N, N, &alpha, DArr_c, N, EVeci, 1, 0, CDVec, 1);
     }
     // To save on computation time I should not do this for all EVecs, but maybe for the first 10
 
