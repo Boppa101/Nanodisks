@@ -26,6 +26,7 @@ int main(int argc, char** argv) {
     int N = atoi(argv[1]);
     int m = atoi(argv[2]);
     int cutoff = atoi(argv[3]);
+
     double EF = atof(argv[4])/au_eV;
     double omega = atof(argv[5])/au_eV;
     double gamma = atof(argv[6])/au_eV;
