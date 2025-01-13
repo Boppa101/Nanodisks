@@ -57,9 +57,9 @@ int main(const int argc, char** argv) {
     char filename_EVal[512]; char filename_EVec[512]; char filename_CD[512];
     FillStrings(N, m, cutoff, EF, omega, gamma, radius, filename_EVal, filename_EVec, filename_CD, sizeof(filename_EVal));
 
-    double ThetaArr[N];
-    double MArr[N*N];
-    double DArr[N*N];
+    double* ThetaArr = (double*)malloc(sizeof(double)*N);
+    double* MArr = (double*)malloc(sizeof(double)*N*N);
+    double* DArr = (double*)malloc(sizeof(double)*N*N);
     FillTheta(N, ThetaArr);
     FillM(N, m, ThetaArr, cutoff, MArr);
     Dtilde(N, m, ThetaArr, DArr);
@@ -67,7 +67,10 @@ int main(const int argc, char** argv) {
     // Arrays for EVals, left EVecs, right EVecs and the matrix
     // vl is not needed, since I specify, that left EVecs are not to be calculated
     MKL_INT NROWS = N, NCOLS = N, NCOLSvl = N, NCOLSvr = N, info;
-    MKL_Complex16 EVals[N], EVecsl[1], EVecsr[N*N], EPMat[N*N];
+    MKL_Complex16* EVals = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N);
+    MKL_Complex16* EVecsr = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N*N);
+    MKL_Complex16* EPMat = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N*N);
+    MKL_Complex16 EVecsl[1];
 
     for(int i=0; i<N; i++) {
         for(int j=0; j<N; j++) {
@@ -92,33 +95,35 @@ int main(const int argc, char** argv) {
     writeArrayToFile(filename_EVal, 0, N, EVals);
     writeArrayToFile(filename_EVec, 1, N, EVecsr);
 
-    MKL_Complex16 DArr_c[N*N];
+    MKL_Complex16* DArr_c = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N*N);
     for(int i=0; i<N*N; i++) {
-        DArr_c[i].real = DArr[i]; DArr_c[i].imag = 0;
+        DArr_c[i] = (MKL_Complex16){DArr[i], 0};
     }
 
-    MKL_Complex16 EVeci[N];
-    MKL_Complex16 CDVec[N];
-    MKL_Complex16 alpha = {1.0, 0.0};
-    MKL_Complex16 beta = {0.0, 0.0};
+    const MKL_Complex16 alpha = {1.0, 0.0};
+    const MKL_Complex16 beta = {0.0, 0.0};
     for(int i=0; i<N; i++) {
+        MKL_Complex16 CDVec[N];
+        MKL_Complex16 EVeci[N];
         for(int j=0; j<N; j++) {
-            EVeci[i] = EVecsr[i*N+j];
+            EVeci[j] = EVecsr[i*N+j];
         }
         cblas_zgemv(CblasRowMajor, CblasNoTrans, N, N, &alpha, DArr_c, N, EVeci, 1, &beta, CDVec, 1);
         for(int j=0; j<N; j++) {
-            EVecsr[i*N+j] = CDVec[j];
+            EVecsr[i*N+j] = multiply_complex(multiply_complex(eta, (MKL_Complex16){1/radius, 0}), CDVec[j]);
         }
-    }
-
-    for(int i=0; i<N*N; i++) {
-        MKL_Complex16 res = multiply_complex(EVecsr[i], eta);
-        EVecsr[i].real = res.real; EVecsr[i].imag = res.imag;
     }
 
     // Maybe extend this function so I ca specify the amount of lines to write -> Never use all 100 EVecs/CD
     writeArrayToFile(filename_CD, 1, N, EVecsr);
 
+    free(ThetaArr);
+    free(MArr);
+    free(DArr);
+    free(EVals);
+    free(EVecsr);
+    free(EPMat);
+    free(DArr_c);
     exit(0);
 }
 
@@ -178,14 +183,14 @@ void writeArrayToFile(const char* filename, int VecOrMat, int N, const MKL_Compl
 
     if(VecOrMat == 0) {
         for(int i=0; i<N; i++) {
-            fprintf(file, "%.7f+%.7f", Arr[i].real, Arr[i].imag);
+            fprintf(file, "%.10f+%.10f", Arr[i].real, Arr[i].imag);
             if(i < N-1) fprintf(file, "\n");
         }
     }
     else {
         for(int i=0; i<N; i++) {
             for(int j=0; j<N; j++) {
-                fprintf(file, "%.7f+%.7f", Arr[i*N+j].real, Arr[i*N+j].imag);
+                fprintf(file, "%.10f+%.10f", Arr[i*N+j].real, Arr[i*N+j].imag);
                 if(j < N-1) fprintf(file, ", ");
             }
             fprintf(file, "\n");
@@ -195,7 +200,7 @@ void writeArrayToFile(const char* filename, int VecOrMat, int N, const MKL_Compl
     fclose(file);
 }
 
-MKL_Complex16 multiply_complex(MKL_Complex16 z1, MKL_Complex16 z2) {
+MKL_Complex16 multiply_complex(const MKL_Complex16 z1, const MKL_Complex16 z2) {
     MKL_Complex16 result;
     result.real = z1.real * z2.real - z1.imag * z2.imag;
     result.imag = z1.real * z2.imag + z1.imag * z2.real;

@@ -21,7 +21,12 @@ add_executable(Tests Tests.c
         Functions.c
         Functions.h)
 
-add_compile_definitions(I=_Complex_I)
+add_executable(ExtCoeff ExtCoeff.c
+        Constants.c
+        Constants.h
+        Functions.c
+        Functions.h)
 
 target_link_libraries(CCode m gsl gslcblas MKL::MKL)
 target_link_libraries(Tests m gsl gslcblas MKL::MKL)
+target_link_libraries(ExtCoeff m gsl gslcblas MKL::MKL)
