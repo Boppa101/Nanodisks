@@ -54,23 +54,20 @@ int main(const int argc, char** argv) {
     eta.real = creal(I*Drude(EF, omega, gamma)/(omega*radius));
     eta.imag = cimag(I*Drude(EF, omega, gamma)/(omega*radius));
 
-    char filename_EVal[512];
-    char filename_EVec[512];
-    char filename_CD[512];
+    char filename_EVal[512]; char filename_EVec[512]; char filename_CD[512];
     FillStrings(N, m, cutoff, EF, omega, gamma, radius, filename_EVal, filename_EVec, filename_CD, sizeof(filename_EVal));
 
     double ThetaArr[N];
-    FillTheta(N, ThetaArr);
-
     double MArr[N*N];
+    double DArr[N*N];
+    FillTheta(N, ThetaArr);
     FillM(N, m, ThetaArr, cutoff, MArr);
-
-    double* DArr = (double*)malloc(sizeof(double)*N*N);
     Dtilde(N, m, ThetaArr, DArr);
 
     // Arrays for EVals, left EVecs, right EVecs and the matrix
+    // vl is not needed, since I specify, that left EVecs are not to be calculated
     MKL_INT NROWS = N, NCOLS = N, NCOLSvl = N, NCOLSvr = N, info;
-    MKL_Complex16 EVals[N], EVecsl[1], EVecsr[N*N], EPMat[N*N]; //vl is not needed, since I specify, that left EVecs are not to be calculated
+    MKL_Complex16 EVals[N], EVecsl[1], EVecsr[N*N], EPMat[N*N];
 
     for(int i=0; i<N; i++) {
         for(int j=0; j<N; j++) {
@@ -102,14 +99,17 @@ int main(const int argc, char** argv) {
 
     MKL_Complex16 EVeci[N];
     MKL_Complex16 CDVec[N];
-    double complex alpha = 0.0 + 0.0*I;
-    for(int i=0; i<10; i++) {
+    MKL_Complex16 alpha = {1.0, 0.0};
+    MKL_Complex16 beta = {0.0, 0.0};
+    for(int i=0; i<N; i++) {
         for(int j=0; j<N; j++) {
             EVeci[i] = EVecsr[i*N+j];
         }
-        cblas_zgemv(CblasRowMajor, CblasNoTrans, N, N, &alpha, DArr_c, N, EVeci, 1, 0, CDVec, 1);
+        cblas_zgemv(CblasRowMajor, CblasNoTrans, N, N, &alpha, DArr_c, N, EVeci, 1, &beta, CDVec, 1);
+        for(int j=0; j<N; j++) {
+            EVecsr[i*N+j] = CDVec[j];
+        }
     }
-    // To save on computation time I should not do this for all EVecs, but maybe for the first 10
 
     for(int i=0; i<N*N; i++) {
         MKL_Complex16 res = multiply_complex(EVecsr[i], eta);
@@ -119,7 +119,6 @@ int main(const int argc, char** argv) {
     // Maybe extend this function so I ca specify the amount of lines to write -> Never use all 100 EVecs/CD
     writeArrayToFile(filename_CD, 1, N, EVecsr);
 
-    free(DArr);
     exit(0);
 }
 
