@@ -18,7 +18,7 @@ void FillTheta(int N, double* ThetaArr) {
 }
 
 void phi_ext(int N, const double* ThetaArr, double a, double* phi_extArr) {
-    for(int i=0; i<N; i++) phi_extArr[i] = -a/2 * ThetaArr[i];
+    for(int i=0; i<N; i++) phi_extArr[i] = -a/2.0 * ThetaArr[i];
 }
 
 double complex Drude(double EF, double omega, double gamma) {
