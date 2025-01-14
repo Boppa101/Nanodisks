@@ -31,7 +31,7 @@ int TestG0(int N, int m, int cutoff, const double* ThetaArr);
 int TestM(int N, int m, int cutoff, const double* ThetaArr);
 
 int main(void) {
-    const int N = 100;
+    const int N = 50;
     const int m = 0;
     const int cutoff = 100;
     double* ThetaArr = (double*)malloc(sizeof(double)*N);
