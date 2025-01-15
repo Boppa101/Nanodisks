@@ -10,47 +10,62 @@
 #include "Functions.h"
 #include "GeneralFunctions.h"
 
+MKL_Complex16 GetCond(double EF, double gamma, double omega, double T, int op);
 void writeDoubleToFile(const char* filename, int VecOrMat, int N, const double* Arr);
 
 int main(const int argc, char** argv) {
-    FILE *fp;
-    char buffer[256];
-    double d1 = -1, d2 = -1;
-
-    // Run the A executable and open a pipe to read its output
-    fp = popen("./Tests", "r");
-    if (fp == NULL) {
-        perror("Failed to run Tests");
-        return 1;
-    }
-
-    // Read the output of A
-    if (fgets(buffer, sizeof(buffer), fp) != NULL) {
-        // Tokenize the string and extract the floats
-        char *token;
-        int count = 0;
-
-        // Use strtok to split the string by ", "
-        token = strtok(buffer, " ");
-        while (token != NULL) {
-            count++;
-            if (count == 3) {
-                d1 = atof(token); // Convert the third float
-            } else if (count == 4) {
-                d2 = atof(token); // Convert the fourth float
-                break; // We have what we need, exit the loop
-            }
-            token = strtok(NULL, " ");
-        }
-    }
-
-    // Close the pipe
-    pclose(fp);
-
-    printf("%f, %f\n", d1, d2);
-    return 0;
-
-
+    // FILE *fp;
+    // char buffer[256];
+    // double d1 = -1, d2 = -1;
+    //
+    // // Run the A executable and open a pipe to read its output
+    // // fp = popen("./Tests", "r");
+    // char command[512];
+    // double arg1     = 0.5;      // EF
+    // double arg2     = 0.02;     // gamma_intra
+    // double arg3     = 0.0;      // gamma_inter
+    // double arg4     = 0.2;      // w_S
+    // double arg5     = 0.2;      // w_E
+    // int arg6        = 1;        // Nw
+    // double arg7     = 0.0;      // q_S
+    // double arg8     = 0.0;      // q_E
+    // int arg9        = 1;        // Nq
+    // double arg10    = 0.0;      // T
+    // int arg11       = 0;        // op
+    // snprintf(command, sizeof(command), "../../../../../WindowsWorker/cmake-build-release-remote-host---laptopzerotier/C %f %f %f %f %f %d %f %f %d %f %d",
+    //     arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+    // fp = popen(command, "r");
+    // if (fp == NULL) {
+    //     perror("Failed to run Tests");
+    //     return 1;
+    // }
+    //
+    // // Read the output of A
+    // if (fgets(buffer, sizeof(buffer), fp) != NULL) {
+    //     // Tokenize the string and extract the floats
+    //     char *token;
+    //     int count = 0;
+    //
+    //     // Use strtok to split the string by ", "
+    //     token = strtok(buffer, " ");
+    //     while (token != NULL) {
+    //         count++;
+    //         if (count == 3) {
+    //             d1 = atof(token); // Convert the third float
+    //         } else if (count == 4) {
+    //             d2 = atof(token); // Convert the fourth float
+    //             break; // We have what we need, exit the loop
+    //         }
+    //         token = strtok(NULL, " ");
+    //     }
+    // }
+    //
+    // // Close the pipe
+    // pclose(fp);
+    //
+    // printf("%f+%f\n", d1, d2);
+    // printf("%f+%f\n", creal(Drude(arg1, arg4, arg2)), cimag(Drude(arg1, arg4, arg2)));
+    // return 0;
 
     if(argc==1) {
         printf("This program calculates the extinction coefficients of a nanodisc for a given set of parameters.\n");
@@ -80,6 +95,9 @@ int main(const int argc, char** argv) {
     const double radius     = atof(argv[8])/au_nm;
     const int steps         = atoi(argv[9]);
     const double c          = 137.03599;
+
+    double T = 0.0;
+    int op = 2;
 
     printf("N=%d, m=%d, cutoff=%d, EF=%f, omega_S=%f, omega_E=%f, gamma=%f, radius=%f, steps=%d\n", N, m, cutoff, EF*au_eV, omega_S*au_eV, omega_E*au_eV, gamma*au_eV, radius*au_nm, steps);
 
@@ -125,7 +143,13 @@ int main(const int argc, char** argv) {
 
         const double omega = omega_S + (omega_E-omega_S)*(double)i/(double)steps;
 
-        const MKL_Complex16 eta = (MKL_Complex16){creal(I*Drude(EF, omega, gamma)/(omega*radius)), cimag(I*Drude(EF, omega, gamma)/(omega*radius))};
+        // MKL_Complex16 sigma_old = {creal(Drude(EF, omega, gamma)), cimag(Drude(EF, omega, gamma))};
+        // MKL_Complex16 eta_old = multiply_complex((MKL_Complex16){0, 1/(omega*radius)}, sigma_old);
+        MKL_Complex16 sigma = GetCond(EF*au_eV, gamma*au_eV, omega*au_eV, T, op);
+        MKL_Complex16 eta = multiply_complex((MKL_Complex16){0, 1/(omega*radius)}, sigma);
+        // if(fabs(eta.real-eta_old.real) >= 1e-7 || fabs(eta.imag-eta_old.imag) >= 1e-7) printf("%f, %f\n", fabs(eta.real-eta_old.real), fabs(eta.imag-eta_old.imag));
+        // if(fabs(sigma.real-sigma_new.real) >= 1e-7 || fabs(sigma.imag-sigma_new.imag) >= 1e-7) printf("%f, %f\n", sigma.real-sigma_new.real, sigma.imag-sigma_new.imag);
+        // MKL_Complex16 eta = (MKL_Complex16){creal(I*Drude(EF, omega, gamma)/(omega*radius)), cimag(I*Drude(EF, omega, gamma)/(omega*radius))};
 
         for(int j=0; j<N; j++) {
             for(int k=0; k<N; k++) {
@@ -215,4 +239,52 @@ void writeDoubleToFile(const char* filename, int VecOrMat, int N, const double* 
     }
 
     fclose(file);
+}
+
+MKL_Complex16 GetCond(double EF, double gamma, double omega, double T, int op) {
+    FILE *fp;
+    char buffer[256];
+    MKL_Complex16 result = {0, 0};
+
+    // Run the A executable and open a pipe to read its output
+    char command[512];
+    double arg1     = EF;       // EF
+    double arg2     = gamma;    // gamma_intra
+    double arg3     = 0.0;      // gamma_inter
+    double arg4     = omega;    // w_S
+    double arg5     = omega;    // w_E
+    int arg6        = 1;        // Nw
+    double arg7     = 0.0;      // q_S
+    double arg8     = 0.0;      // q_E
+    int arg9        = 1;        // Nq
+    double arg10    = T;        // T
+    int arg11       = op;       // op
+    snprintf(command, sizeof(command), "../../../../../WindowsWorker/cmake-build-release-remote-host---laptopzerotier/C %f %f %f %f %f %d %f %f %d %f %d",
+        arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+    fp = popen(command, "r");
+    if (fp == NULL) {
+        printf("Failed to get Conductivity!\n");
+    }
+
+    // Read the output of ./C
+    if (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        // Tokenize the string and extract the floats
+        char *token;
+        int count = 0;
+
+        // Use strtok to split the string by ", "
+        token = strtok(buffer, " ");
+        while (token != NULL) {
+            count++;
+            if (count == 3) {
+                result.real = atof(token); // Convert the third float
+            } else if (count == 4) {
+                result.imag = atof(token); // Convert the fourth float
+                break; // We have what we need, exit the loop
+            }
+            token = strtok(NULL, " ");
+        }
+    }
+    pclose(fp);
+    return result;
 }
