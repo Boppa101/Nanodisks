@@ -1,21 +1,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <complex.h>
-// #include <time.h>
-
-// #include "../../opt/intel/oneapi/mkl/2024.2/include/mkl.h"
 #include <math.h>
 
 #include "mkl.h"
 
 #include "Constants.h"
 #include "Functions.h"
+#include "GeneralFunctions.h"
 
-// MKL_Complex16 multiply_complex(const MKL_Complex16 z1, const MKL_Complex16 z2);
-void print_matrix(char* desc, MKL_INT m, MKL_INT n, const MKL_Complex16* a, MKL_INT lda);
 void writeDoubleToFile(const char* filename, int VecOrMat, int N, const double* Arr);
 
-int main(int argc, char** argv) {
+int main(const int argc, char** argv) {
+    if(argc==1) {
+        printf("This program calculates the extinction coefficients of a nanodisc for a given set of parameters.\n");
+        printf("\nParameters:\nN:\t\tSize of Arrays and Matrices (NxN)\nm:\t\tAzimuthal Symmetrie\n"
+               "cutoff:\t\tCutoff for g_m\nEF:\t\tFermi level in eV\nomega_S:\tStart of array of optical frequencies in eV\n"
+               "omega_E:\tEnd of array of optical frequencies in eV\ngamma:\t\tDamping rate in ev\nradius:\t\tDiskradius in nm\n"
+               "steps:\t\tNumber of steps through the array of frequencies\n\n"
+               "As last argument the path to a folder can be given, where the output is saved.\n\n");
+        printf("Extinction coefficients are saved in the file:\n"
+               "(path to folder)ExtCoeff_N(Val)m(Val)cutoff(Val)EF(Val)omega_S(Val)omega_E(Val)gamma(Val)radius(Val)steps(Val).txt\n");
+        return 1;
+    }
+    if(argc != 10 && argc != 11) {
+        printf("Recheck arguments!\n");
+        return 1;
+    }
+
     // Read in parameters from command line
     const int N             = atoi(argv[1]);
     const int m             = atoi(argv[2]);
@@ -39,11 +51,13 @@ int main(int argc, char** argv) {
     for (char* p = params; *p; ++p) {
         if (*p == '.') { *p = '_'; }
     }
-    snprintf(filename, sizeof(filename), "../DataEC/ExtCoeff_%s.txt", params);
+    if(argc==11) { snprintf(filename, sizeof(filename), "%sExtCoeff_%s.txt", argv[10], params); } //   ../DataEC/
+    else{ snprintf(filename, sizeof(filename), "ExtCoeff_%s.txt", params); }
+    printf("Output saved in:\n%s\n", filename);
     FILE* file = fopen(filename, "w");
     if(file == NULL) {
         perror("Error opening file");
-        exit(1);
+        return 1;
     }
 
     // Allocate memory for all arrays (vectors and matrices)
@@ -71,7 +85,7 @@ int main(int argc, char** argv) {
 
         const double omega = omega_S + (omega_E-omega_S)*(double)i/(double)steps;
 
-        MKL_Complex16 eta = (MKL_Complex16){creal(I*Drude(EF, omega, gamma)/(omega*radius)), cimag(I*Drude(EF, omega, gamma)/(omega*radius))};
+        const MKL_Complex16 eta = (MKL_Complex16){creal(I*Drude(EF, omega, gamma)/(omega*radius)), cimag(I*Drude(EF, omega, gamma)/(omega*radius))};
 
         for(int j=0; j<N; j++) {
             for(int k=0; k<N; k++) {
@@ -93,11 +107,11 @@ int main(int argc, char** argv) {
         const MKL_INT info = LAPACKE_zgesv(LAPACK_ROW_MAJOR, N, nrhs, Mtilde_Mat, lda, ipiv, phi_ext_Vec_c, ldb);
         if (info > 0) {
             printf("The diagonal element of the triangular factor of A,\nU(%lld,%lld) is zero, so that A is singular;\nthe solution could not be computed.\n", info, info);
-            exit(1);
+            return 1;
         }
         if(info < 0) {
             printf("Error: Parameter %lld had an illegal value.\n", -info);
-            exit(1);
+            return 1;
         }
 
         // Calculate charge density from total potential (saved in phi_ext_Vec_c from previous step)
@@ -134,17 +148,7 @@ int main(int argc, char** argv) {
     mkl_free(D_Mat);
     mkl_free(D_Mat_c);
     mkl_free(Mtilde_Mat);
-    exit(0);
-}
-
-void print_matrix( char* desc, MKL_INT m, MKL_INT n, const MKL_Complex16* a, MKL_INT lda ) {
-    printf("\n %s\n", desc);
-    for (MKL_INT i = 0; i < m; i++) {
-        for (MKL_INT j = 0; j < n; j++) {
-            printf(" (%6.2f,%6.2f)", a[i + j * lda].real, a[i + j * lda].imag);
-        }
-        printf("\n");
-    }
+    return 0;
 }
 
 void writeDoubleToFile(const char* filename, int VecOrMat, int N, const double* Arr) {

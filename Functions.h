@@ -1,9 +1,7 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
-#include "mkl.h"
-
-MKL_Complex16 multiply_complex(const MKL_Complex16 z1, const MKL_Complex16 z2);
+#include <complex.h>
 
 void phi_ext(int N, const double* ThetaArr, double a, double* phi_extArr);
 void FillTheta(int N, double* ThetaArr);

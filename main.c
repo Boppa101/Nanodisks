@@ -1,21 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <complex.h>
-#include <tgmath.h>
 
-#include "../../opt/intel/oneapi/mkl/2024.2/include/mkl.h"
+#include "mkl.h"
 
 #include "Constants.h"
 #include "Functions.h"
+#include "GeneralFunctions.h"
 
-void PrintArr(int N, const double* Arr);
-void print_matrix(char* desc, MKL_INT m, MKL_INT n, const MKL_Complex16* a, MKL_INT lda);
-void TransposeMat(MKL_INT N, MKL_Complex16* Mat);
-void SortEigen(MKL_INT N, MKL_Complex16* EVal, MKL_Complex16* EVec);
 void writeArrayToFile(const char* filename, int VecOrMat, int N, const MKL_Complex16* Arr);
-// MKL_Complex16 multiply_complex(MKL_Complex16 z1, MKL_Complex16 z2);
 void FillStrings(int N, int m, int cutoff, double EF, double omega, double gamma, double radius, char* filename_EVal, char* filename_EVec, char* filename_CD, size_t size);
-int TestParams(int m, double EF, double omega);
 
 int main(const int argc, char** argv) {
     if(argc==1) {
@@ -34,39 +29,37 @@ int main(const int argc, char** argv) {
         return 1;
     }
 
-    const int N = atoi(argv[1]);
-    const int m = atoi(argv[2]);
-    const int cutoff = atoi(argv[3]);
+    const int N         = atoi(argv[1]);
+    const int m         = atoi(argv[2]);
+    const int cutoff    = atoi(argv[3]);
 
-    const double EF = atof(argv[4])/au_eV;
-    const double omega = atof(argv[5])/au_eV;
-    const double gamma = atof(argv[6])/au_eV;
+    const double EF     = atof(argv[4])/au_eV;
+    const double omega  = atof(argv[5])/au_eV;
+    const double gamma  = atof(argv[6])/au_eV;
     const double radius = atof(argv[7])/au_nm;
 
-    const int TestParams_int = TestParams(m, EF, omega);
-    if(TestParams_int == 1) {
+    if(m != 0 && m != 1) {
+        printf("Invalid value for m!\n");
         return 1;
     }
 
     printf("N=%d, m=%d, cutoff=%d, EF=%f, omega=%f, gamma=%f, radius=%f\n", N, m, cutoff, EF*au_eV, omega*au_eV, gamma*au_eV, radius*au_nm);
 
-    MKL_Complex16 eta;
-    eta.real = creal(I*Drude(EF, omega, gamma)/(omega*radius));
-    eta.imag = cimag(I*Drude(EF, omega, gamma)/(omega*radius));
+    const MKL_Complex16 eta = (MKL_Complex16){creal(I*Drude(EF, omega, gamma)/(omega*radius)), cimag(I*Drude(EF, omega, gamma)/(omega*radius))};
 
     char filename_EVal[512]; char filename_EVec[512]; char filename_CD[512];
     FillStrings(N, m, cutoff, EF, omega, gamma, radius, filename_EVal, filename_EVec, filename_CD, sizeof(filename_EVal));
 
-    double* ThetaArr = (double*)malloc(sizeof(double)*N);
-    double* MArr = (double*)malloc(sizeof(double)*N*N);
-    double* DArr = (double*)malloc(sizeof(double)*N*N);
-    FillTheta(N, ThetaArr);
-    FillM(N, m, ThetaArr, cutoff, MArr);
-    Dtilde(N, m, ThetaArr, DArr);
+    double* ThetaArr_Vec    = (double*)malloc(sizeof(double)*N);
+    double* MArr_Mat        = (double*)malloc(sizeof(double)*N*N);
+    double* DArr_Mat        = (double*)malloc(sizeof(double)*N*N);
+    FillTheta(N, ThetaArr_Vec);
+    FillM(N, m, ThetaArr_Vec, cutoff, MArr_Mat);
+    Dtilde(N, m, ThetaArr_Vec, DArr_Mat);
 
     // Arrays for EVals, left EVecs, right EVecs and the matrix
     // vl is not needed, since I specify, that left EVecs are not to be calculated
-    MKL_INT NROWS = N, NCOLS = N, NCOLSvl = N, NCOLSvr = N, info;
+    MKL_INT NROWS = N, NCOLS = N, NCOLSvl = N, NCOLSvr = N;
     MKL_Complex16* EVals = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N);
     MKL_Complex16* EVecsr = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N*N);
     MKL_Complex16* EPMat = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N*N);
@@ -74,21 +67,21 @@ int main(const int argc, char** argv) {
 
     for(int i=0; i<N; i++) {
         for(int j=0; j<N; j++) {
-            EPMat[i*N+j].real = eta.real * MArr[i*N+j]; EPMat[i*N+j].imag = eta.imag * MArr[i*N+j];
+            EPMat[i*N+j].real = eta.real * MArr_Mat[i*N+j]; EPMat[i*N+j].imag = eta.imag * MArr_Mat[i*N+j];
         }
     }
 
     /* Solve eigenproblem */
-    info = LAPACKE_zgeev(LAPACK_ROW_MAJOR, 'N', 'V', NROWS, EPMat, NCOLS, EVals, EVecsl, NCOLSvl, EVecsr, NCOLSvr);
+    MKL_INT info = LAPACKE_zgeev(LAPACK_ROW_MAJOR, 'N', 'V', NROWS, EPMat, NCOLS, EVals, EVecsl, NCOLSvl, EVecsr, NCOLSvr);
 
     /* Check for convergence */
     if (info > 0) {
         printf("The algorithm failed to compute eigenvalues.\n");
-        exit(1);
+        return 1;
     }
 
     // A given Eigevector is saved in one COLLUMN -> I transpose to have them in rows
-    TransposeMat(N, EVecsr);
+    TransposeMatMKLComplex(N, EVecsr);
     SortEigen(N, EVals, EVecsr);
 
     // Maybe extend this function so I ca specify the amount of lines to write -> Never use all 100 EVecs/CD
@@ -97,7 +90,7 @@ int main(const int argc, char** argv) {
 
     MKL_Complex16* DArr_c = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N*N);
     for(int i=0; i<N*N; i++) {
-        DArr_c[i] = (MKL_Complex16){DArr[i], 0};
+        DArr_c[i] = (MKL_Complex16){DArr_Mat[i], 0};
     }
 
     const MKL_Complex16 alpha = {1.0, 0.0};
@@ -114,67 +107,24 @@ int main(const int argc, char** argv) {
         }
     }
 
-    // Maybe extend this function so I ca specify the amount of lines to write -> Never use all 100 EVecs/CD
+    // Maybe extend this function so I can specify the amount of lines to write -> Never use all 100 EVecs/CD
     writeArrayToFile(filename_CD, 1, N, EVecsr);
 
-    free(ThetaArr);
-    free(MArr);
-    free(DArr);
+    free(ThetaArr_Vec);
+    free(MArr_Mat);
+    free(DArr_Mat);
     free(EVals);
     free(EVecsr);
     free(EPMat);
     free(DArr_c);
-    exit(0);
-}
-
-void TransposeMat(MKL_INT N, MKL_Complex16* Mat) {
-    for(MKL_INT i=0; i<N; i++) {
-        for(MKL_INT j=i+1; j<N; j++) {
-            MKL_Complex16 temp;
-            temp.real = Mat[i*N+j].real; temp.imag = Mat[i*N+j].imag;
-            Mat[i*N+j].real = Mat[j*N+i].real; Mat[i*N+j].imag = Mat[j*N+i].imag;
-            Mat[j*N+i].real = temp.real; Mat[j*N+i].imag = temp.imag;
-        }
-    }
-}
-
-void SortEigen(MKL_INT N, MKL_Complex16* EVal, MKL_Complex16* EVec) {
-    for(MKL_INT i=0; i<N-1; i++) {
-        for(MKL_INT j=0; j<N-i-1; j++) {
-            if(EVal[j].real > EVal[j+1].real) {
-                // Swap eigenvalues
-                MKL_Complex16 temp_val;
-                temp_val.real = EVal[j].real; temp_val.imag = EVal[j].imag;
-                EVal[j].real = EVal[j+1].real; EVal[j].imag = EVal[j+1].imag;
-                EVal[j+1].real = temp_val.real; EVal[j+1].imag = temp_val.imag;
-
-                // Swap corresponding EVecs assuming one EVec is in one ROW
-                for(MKL_INT k=0; k<N; k++) {
-                    MKL_Complex16 temp_vec;
-                    temp_vec.real = EVec[j*N + k].real; temp_vec.imag = EVec[j*N + k].imag;
-                    EVec[j*N + k].real = EVec[(j+1)*N + k].real; EVec[j*N + k].imag = EVec[(j+1)*N + k].imag;
-                    EVec[(j+1)*N + k].real = temp_vec.real; EVec[(j+1)*N + k].imag = temp_vec.imag;
-                }
-            }
-        }
-    }
-}
-
-void print_matrix(char* desc, MKL_INT m, MKL_INT n, const MKL_Complex16* a, MKL_INT lda) {
-    printf("\n %s\n", desc);
-    for(MKL_INT i=0; i<m; i++) {
-        for(MKL_INT j=0; j<n; j++)
-            printf(" (%.2f, %.2f)", a[i*lda+j].real, a[i*lda+j].imag);
-        printf("\n");
-    }
-}
-
-void PrintArr(int N, const double* Arr) {
-    for(int i=0; i<N; i++) printf("%f, ", Arr[i]);
-    printf("\n");
+    return 0;
 }
 
 void writeArrayToFile(const char* filename, int VecOrMat, int N, const MKL_Complex16* Arr) {
+    if(Arr==NULL) {
+        printf("Array cannot be saved, it is not correctly initialised!\n");
+        return;
+    }
     FILE* file = fopen(filename, "w");
     if(file == NULL) {
         perror("Error opening file");
@@ -233,15 +183,4 @@ void FillStrings(
     snprintf(filename_EVal, size, "../Data/EVal_%s.txt", params);
     snprintf(filename_EVec, size, "../Data/EVec_%s.txt", params);
     snprintf(filename_CD, size, "../Data/CD___%s.txt", params);
-}
-
-int TestParams(int m, double EF, double omega) {
-    if(m!=0 && m!=1) {
-        printf("Invalid value for m!\n");
-        return 1;
-    }
-    if(EF < omega) {
-        printf("Warning: Implemented is Drude conductivity and expects EF>omega!\n");
-    }
-    return 0;
 }

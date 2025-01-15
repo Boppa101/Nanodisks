@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <complex.h>
 
-#include "../../opt/intel/oneapi/mkl/2024.2/include/mkl.h"
+#include "mkl.h"
 #include <gsl/gsl_integration.h>
 
 #include "Functions.h"
@@ -20,28 +19,56 @@
 // wStart:       Lower frequency bound in eV
 // wEnd:         Upper frequency bound in eV
 
-void PrintArr(int N, const double* Arr);
 int TestD1(int N, int m, const double* ThetaArr);
 int TestD2(int N, int m, const double* ThetaArr);
 int TestDTilde(int N, int m, const double* ThetaArr);
 void TestCoulomb(int N, int m, int cutoff, const double* ThetaArr, double* res);
-int TestG2(int N, int m, int cutoff, const double* ThetaArr);
-int TestG1(int N, int m, int cutoff, const double* ThetaArr);
 int TestG0(int N, int m, int cutoff, const double* ThetaArr);
+int TestG1(int N, int m, int cutoff, const double* ThetaArr);
+int TestG2(int N, int m, int cutoff, const double* ThetaArr);
 int TestM(int N, int m, int cutoff, const double* ThetaArr);
 
 int main(void) {
-    const int N = 50;
-    const int m = 0;
+    const int N = 100;
+    int m = 0;
     const int cutoff = 100;
     double* ThetaArr = (double*)malloc(sizeof(double)*N);
     if(ThetaArr==NULL) {
-        printf("Error in Array initialisation!\n");
+        printf("Error initialising ThetaArr!\n");
+        free(ThetaArr);
         return 1;
     }
     FillTheta(N, ThetaArr);
 
     int res;
+
+    printf("Running tests for m=0\n\n");
+
+    res = TestD1(N, m, ThetaArr);
+    if(res==0) printf("Test of matrix D1 was successfull.\n");
+    else printf("Test of matrix D1 was NOT successfull.\n");
+    res = TestD2(N, m, ThetaArr);
+    if(res==0) printf("Test of matrix D2 was successfull.\n");
+    else printf("Test of matrix D2 was NOT successfull.\n");
+    res = TestDTilde(N, m, ThetaArr);
+    if(res==0) printf("Test of matrix DTilde was successfull.\n");
+    else printf("Test of matrix DTilde was NOT successfull.\n");
+    res = TestG0(N, m, cutoff, ThetaArr);
+    if(res==0) printf("Test of matrix G0 was successfull.\n");
+    else printf("Test of matrix G0 was NOT successfull.\n");
+    res = TestG1(N, m, cutoff, ThetaArr);
+    if(res==0) printf("Test of matrix G1 was successfull.\n");
+    else printf("Test of matrix G1 was NOT successfull.\n");
+    res = TestG2(N, m, cutoff, ThetaArr);
+    if(res==0) printf("Test of matrix G2 was successfull.\n");
+    else printf("Test of matrix G2 was NOT successfull.\n");
+    res = TestM(N, m, cutoff, ThetaArr);
+    if(res==0) printf("Test of matrix M was successfull.\n");
+    else printf("Test of matrix M was NOT successfull.\n");
+
+    m = 1;
+
+    printf("Running tests for m=1\n\n");
 
     res = TestD1(N, m, ThetaArr);
     if(res==0) printf("Test of matrix D1 was successfull.\n");
@@ -71,7 +98,7 @@ int main(void) {
     //     return 1;
     // }
     // TestCoulomb(N, m, cutoff, ThetaArr, res);
-    // PrintArr(N, res);
+    // PrintArrDouble(N, N, res);
     // free(res);
 
     free(ThetaArr);
@@ -80,20 +107,20 @@ int main(void) {
 
 double phi(double x, int m) {
     if(m==0)    return cos(M_PI*x);
-    else        return sin(M_PI/2*x);
+                return sin(M_PI/2*x);
 }
 
 double dphi(double x, int m) {
     if(m==0)    return -M_PI*sin(M_PI*x);
-    else        return M_PI/2*cos(M_PI/2*x);
+                return M_PI/2*cos(M_PI/2*x);
 }
 
 double ddphi(double x, int m) {
     if(m==0)    return -pow(M_PI, 2)*cos(M_PI*x);
-    else        return -pow(M_PI/2, 2)*sin(M_PI/2*x);
+                return -pow(M_PI/2, 2)*sin(M_PI/2*x);
 }
 
-int TestD1(int N, int m, const double* ThetaArr) {
+int TestD1(const int N, const int m, const double* ThetaArr) {
     double* y = (double*)malloc(sizeof(double)*N);
     double* dy = (double*)malloc(sizeof(double)*N);
     for(int i=0; i<N; i++) y[i] = phi(ThetaArr[i], m);
@@ -148,8 +175,6 @@ int TestDTilde(int N, int m, const double* ThetaArr) {
     double* Dy = (double*)malloc(sizeof(double)*N);
     for(int i=0; i<N; i++) y[i] = phi(ThetaArr[i], m);
     for(int i=0; i<N; i++) Dy[i] = ddphi(ThetaArr[i], m) + 1/ThetaArr[i]*dphi(ThetaArr[i], m) - pow(m, 2)/pow(ThetaArr[i], 2)*phi(ThetaArr[i], m);
-    // if(m==0) for(int i=0; i<N; i++) Dy[i] = -pow(M_PI, 2)*cos(M_PI*ThetaArr[i]) - 1/ThetaArr[i]*M_PI*sin(M_PI*ThetaArr[i]);
-    // else for(int i=0; i<N; i++) Dy[i] = -pow(M_PI/2, 2)*sin(M_PI/2*ThetaArr[i]) + 1/ThetaArr[i]*M_PI/2*cos(M_PI/2*ThetaArr[i]) - pow(m, 2)/pow(ThetaArr[i], 2)*sin(M_PI/2*ThetaArr[i]);
 
     double* DtildeArr = (double*)malloc(sizeof(double)*N*N);
     Dtilde(N, m, ThetaArr, DtildeArr);
@@ -387,9 +412,4 @@ int TestM(int N, int m, int cutoff, const double* ThetaArr) {
     free(res);
     free(res_ana);
     return Flag_res;
-}
-
-void PrintArr(int N, const double* Arr) {
-    for(int i=0; i<N; i++) printf("%f, ", Arr[i]);
-    printf("\n");
 }
