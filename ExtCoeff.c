@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <complex.h>
 #include <math.h>
+#include <string.h>
 
 #include "mkl.h"
 
@@ -13,8 +14,8 @@ void writeDoubleToFile(const char* filename, int VecOrMat, int N, const double* 
 
 int main(const int argc, char** argv) {
     FILE *fp;
-    char buffer[128];
-    int result;
+    char buffer[256];
+    double d1 = -1, d2 = -1;
 
     // Run the A executable and open a pipe to read its output
     fp = popen("./Tests", "r");
@@ -25,12 +26,28 @@ int main(const int argc, char** argv) {
 
     // Read the output of A
     if (fgets(buffer, sizeof(buffer), fp) != NULL) {
-        result = atoi(buffer); // Convert the output to an integer
-        printf("Result from Tests: %d\n", result);
+        // Tokenize the string and extract the floats
+        char *token;
+        int count = 0;
+
+        // Use strtok to split the string by ", "
+        token = strtok(buffer, " ");
+        while (token != NULL) {
+            count++;
+            if (count == 3) {
+                d1 = atof(token); // Convert the third float
+            } else if (count == 4) {
+                d2 = atof(token); // Convert the fourth float
+                break; // We have what we need, exit the loop
+            }
+            token = strtok(NULL, " ");
+        }
     }
 
     // Close the pipe
     pclose(fp);
+
+    printf("%f, %f\n", d1, d2);
     return 0;
 
 

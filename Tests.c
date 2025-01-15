@@ -29,7 +29,7 @@ int TestG2(int N, int m, int cutoff, const double* ThetaArr);
 int TestM(int N, int m, int cutoff, const double* ThetaArr);
 
 int main() {
-    printf("%d\n", 42);
+    printf("%f %f %f %f %f %f\n", 0.1, 0.2, 0.3, 0.4, 0.5, 0.6);
     return 0;
     const int N = 100;
     int m = 0;
