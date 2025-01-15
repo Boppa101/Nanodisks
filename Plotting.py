@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import Functions as Fun
-# %%
+# %% EIGENVECTORS
 N = 600
 m = 0
 cutoff = 100
