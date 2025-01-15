@@ -12,6 +12,29 @@
 void writeDoubleToFile(const char* filename, int VecOrMat, int N, const double* Arr);
 
 int main(const int argc, char** argv) {
+    FILE *fp;
+    char buffer[128];
+    int result;
+
+    // Run the A executable and open a pipe to read its output
+    fp = popen("./Tests", "r");
+    if (fp == NULL) {
+        perror("Failed to run Tests");
+        return 1;
+    }
+
+    // Read the output of A
+    if (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        result = atoi(buffer); // Convert the output to an integer
+        printf("Result from Tests: %d\n", result);
+    }
+
+    // Close the pipe
+    pclose(fp);
+    return 0;
+
+
+
     if(argc==1) {
         printf("This program calculates the extinction coefficients of a nanodisc for a given set of parameters.\n");
         printf("\nParameters:\nN:\t\tSize of Arrays and Matrices (NxN)\nm:\t\tAzimuthal Symmetrie\n"
