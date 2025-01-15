@@ -121,4 +121,23 @@ plt.plot(x, 1.7*CRes, label='C (scaled)')
 plt.legend()
 # plt.ylim(-0.002, 0.002)
 plt.show()
+# %% EXCTINCTION COEFFICIENTS
+def read_arrays(filename):
+    all_omega = []
+    all_ExtCoeff = []
+    with open(filename, 'r') as file:
+        for line in file:
+            entries = line.strip().split(", ")
+            all_omega.append(float(entries[0]))
+            all_ExtCoeff.append(float(entries[1]))
+    return all_omega, all_ExtCoeff
+# %%
+omega, ExtCoeff = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400.txt')
+# %%
+plt.plot(omega, ExtCoeff, color='red')
+plt.xlim(0.2, 0.3)
+plt.ylim(0, 1.5)
+# plt.savefig('resC.png', dpi=350, bbox_inches='tight', transparent=True)
+plt.show()
+print(np.max(ExtCoeff))
 # %%

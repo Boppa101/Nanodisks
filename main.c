@@ -13,7 +13,7 @@ void print_matrix(char* desc, MKL_INT m, MKL_INT n, const MKL_Complex16* a, MKL_
 void TransposeMat(MKL_INT N, MKL_Complex16* Mat);
 void SortEigen(MKL_INT N, MKL_Complex16* EVal, MKL_Complex16* EVec);
 void writeArrayToFile(const char* filename, int VecOrMat, int N, const MKL_Complex16* Arr);
-MKL_Complex16 multiply_complex(MKL_Complex16 z1, MKL_Complex16 z2);
+// MKL_Complex16 multiply_complex(MKL_Complex16 z1, MKL_Complex16 z2);
 void FillStrings(int N, int m, int cutoff, double EF, double omega, double gamma, double radius, char* filename_EVal, char* filename_EVec, char* filename_CD, size_t size);
 int TestParams(int m, double EF, double omega);
 
@@ -200,12 +200,12 @@ void writeArrayToFile(const char* filename, int VecOrMat, int N, const MKL_Compl
     fclose(file);
 }
 
-MKL_Complex16 multiply_complex(const MKL_Complex16 z1, const MKL_Complex16 z2) {
-    MKL_Complex16 result;
-    result.real = z1.real * z2.real - z1.imag * z2.imag;
-    result.imag = z1.real * z2.imag + z1.imag * z2.real;
-    return result;
-}
+// MKL_Complex16 multiply_complex(const MKL_Complex16 z1, const MKL_Complex16 z2) {
+//     MKL_Complex16 result;
+//     result.real = z1.real * z2.real - z1.imag * z2.imag;
+//     result.imag = z1.real * z2.imag + z1.imag * z2.real;
+//     return result;
+// }
 
 void FillStrings(
     int N, int m, int cutoff,
