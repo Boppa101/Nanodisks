@@ -132,20 +132,19 @@ def read_arrays(filename):
             all_ExtCoeff.append(float(entries[1]))
     return all_omega, all_ExtCoeff
 # %%
-omega, ExtCoeff = read_arrays('DataEC/ExtCoeff_N500m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400.txt')
+omega, ExtCoeff = read_arrays('DataEC/ExtCoeff_N500m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps600.txt')
 print(np.max(ExtCoeff))
 print(omega[np.where(ExtCoeff == np.max(ExtCoeff))[0][0]])
 # %%
 plt.plot(omega, ExtCoeff, color='red')
-plt.xlim(0.2, 0.3)
+plt.xlim(0.15, 0.4)
 plt.ylim(0, 1.5)
 # plt.savefig('resC.png', dpi=350, bbox_inches='tight', transparent=True)
 plt.show()
-print(np.max(ExtCoeff))
 # %%
 AllN = [50, 100, 200, 300, 400, 500]
-ExtCoeff_max = [1.3369093479, 1.3395282491, 1.3407709807, 1.3411293254, 1.3412658275, 1.3413360503]
-center = [0.25255, 0.2521, 0.25195, 0.25195, 0.25195, 0.2518]
+ExtCoeff_max = [1.3369093479, 1.3395282491, 1.3407709807, 1.3411293254, 1.3412658275, 1.3414016051]
+center = [0.25255, 0.2521, 0.25195, 0.25195, 0.25195, 0.2519]
 
 plt.plot(AllN, ExtCoeff_max, 'o')
 plt.title('Peak-value of extinction coefficient')
