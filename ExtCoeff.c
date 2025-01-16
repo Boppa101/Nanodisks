@@ -89,13 +89,10 @@ int main(const int argc, char** argv) {
 
         const double omega = omega_S + (omega_E-omega_S)*(double)i/(double)steps;
 
-        // MKL_Complex16 sigma_old = {creal(Drude(EF, omega, gamma)), cimag(Drude(EF, omega, gamma))};
-        // MKL_Complex16 eta_old = multiply_complex((MKL_Complex16){0, 1/(omega*radius)}, sigma_old);
+        // MKL_Complex16 sigma = {creal(Drude(EF, omega, gamma)), cimag(Drude(EF, omega, gamma))};
+        // MKL_Complex16 eta = multiply_complex((MKL_Complex16){0, 1/(omega*radius)}, sigma);
         const MKL_Complex16 sigma = GetCond(EF*au_eV, gamma*au_eV, omega*au_eV, T, op);
         const MKL_Complex16 eta = multiply_complex((MKL_Complex16){0, 1/(omega*radius)}, sigma);
-        // if(fabs(eta.real-eta_old.real) >= 1e-7 || fabs(eta.imag-eta_old.imag) >= 1e-7) printf("%f, %f\n", fabs(eta.real-eta_old.real), fabs(eta.imag-eta_old.imag));
-        // if(fabs(sigma.real-sigma_new.real) >= 1e-7 || fabs(sigma.imag-sigma_new.imag) >= 1e-7) printf("%f, %f\n", sigma.real-sigma_new.real, sigma.imag-sigma_new.imag);
-        // MKL_Complex16 eta = (MKL_Complex16){creal(I*Drude(EF, omega, gamma)/(omega*radius)), cimag(I*Drude(EF, omega, gamma)/(omega*radius))};
 
         for(int j=0; j<N; j++) {
             for(int k=0; k<N; k++) {

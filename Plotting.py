@@ -133,20 +133,21 @@ def read_arrays(filename):
     return all_omega, all_ExtCoeff
 # %%
 omega_D, ExtCoeff_D = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T0_00op0.txt')
-omega_DT, ExtCoeff_DT = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T300_00op0.txt')
-omega_DI, ExtCoeff_DI = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T0_00op1.txt')
-omega_DIT, ExtCoeff_DIT = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T300_00op1.txt')
+omega_DT, ExtCoeff_DT = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T500_00op0.txt')
+# omega_DI, ExtCoeff_DI = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T0_00op1.txt')
+# omega_DIT, ExtCoeff_DIT = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T300_00op1.txt')
 omega_RPA, ExtCoeff_RPA = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T0_00op2.txt')
-omega_RPAT, ExtCoeff_RPAT = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T300_00op2.txt')
+# omega_RPAT, ExtCoeff_RPAT = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T300_00op2.txt')
+omega_RPAT_1, ExtCoeff_RPAT_1 = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T500_00op2.txt')
 # print(np.max(ExtCoeff), np.max(ExtCoeff_o))
 # print(omega[np.where(ExtCoeff == np.max(ExtCoeff))[0][0]], omega_o[np.where(ExtCoeff_o == np.max(ExtCoeff_o))[0][0]])
 # %%
 plt.plot(omega_D, ExtCoeff_D, label='Drude')
 plt.plot(omega_DT, ExtCoeff_DT, label='Drude', linestyle='--')
-plt.plot(omega_DI, ExtCoeff_DI, label='Drude + inter')
-plt.plot(omega_DIT, ExtCoeff_DIT, label='Drude + inter', linestyle='--')
+# plt.plot(omega_DI, ExtCoeff_DI, label='Drude + inter')
+# plt.plot(omega_DIT, ExtCoeff_DIT, label='Drude + inter', linestyle='--')
 plt.plot(omega_RPA, ExtCoeff_RPA, label='RPA')
-plt.plot(omega_RPAT, ExtCoeff_RPAT, label='RPA', linestyle='--')
+plt.plot(omega_RPAT_1, ExtCoeff_RPAT_1, label='RPA', linestyle='--')
 # plt.plot(omega, ExtCoeff, color='blue', label='Drude')
 # plt.plot(omega_n, ExtCoeff_n, color='red', label='Local RPA')
 plt.legend()
@@ -168,4 +169,14 @@ plt.plot(AllN, center, 'o')
 plt.title('Position of the Peak-value')
 plt.xlabel('N')
 plt.show()
+# %%
+def read_arrays(filename):
+    all_omega = []
+    all_ExtCoeff = []
+    with open(filename, 'r') as file:
+        for line in file:
+            entries = line.strip().split(", ")
+            all_omega.append(float(entries[0]))
+            all_ExtCoeff.append(float(entries[1]))
+    return all_omega, all_ExtCoeff
 # %%
