@@ -14,71 +14,18 @@ MKL_Complex16 GetCond(double EF, double gamma, double omega, double T, int op);
 void writeDoubleToFile(const char* filename, int VecOrMat, int N, const double* Arr);
 
 int main(const int argc, char** argv) {
-    // FILE *fp;
-    // char buffer[256];
-    // double d1 = -1, d2 = -1;
-    //
-    // // Run the A executable and open a pipe to read its output
-    // // fp = popen("./Tests", "r");
-    // char command[512];
-    // double arg1     = 0.5;      // EF
-    // double arg2     = 0.02;     // gamma_intra
-    // double arg3     = 0.0;      // gamma_inter
-    // double arg4     = 0.2;      // w_S
-    // double arg5     = 0.2;      // w_E
-    // int arg6        = 1;        // Nw
-    // double arg7     = 0.0;      // q_S
-    // double arg8     = 0.0;      // q_E
-    // int arg9        = 1;        // Nq
-    // double arg10    = 0.0;      // T
-    // int arg11       = 0;        // op
-    // snprintf(command, sizeof(command), "../../../../../WindowsWorker/cmake-build-release-remote-host---laptopzerotier/C %f %f %f %f %f %d %f %f %d %f %d",
-    //     arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
-    // fp = popen(command, "r");
-    // if (fp == NULL) {
-    //     perror("Failed to run Tests");
-    //     return 1;
-    // }
-    //
-    // // Read the output of A
-    // if (fgets(buffer, sizeof(buffer), fp) != NULL) {
-    //     // Tokenize the string and extract the floats
-    //     char *token;
-    //     int count = 0;
-    //
-    //     // Use strtok to split the string by ", "
-    //     token = strtok(buffer, " ");
-    //     while (token != NULL) {
-    //         count++;
-    //         if (count == 3) {
-    //             d1 = atof(token); // Convert the third float
-    //         } else if (count == 4) {
-    //             d2 = atof(token); // Convert the fourth float
-    //             break; // We have what we need, exit the loop
-    //         }
-    //         token = strtok(NULL, " ");
-    //     }
-    // }
-    //
-    // // Close the pipe
-    // pclose(fp);
-    //
-    // printf("%f+%f\n", d1, d2);
-    // printf("%f+%f\n", creal(Drude(arg1, arg4, arg2)), cimag(Drude(arg1, arg4, arg2)));
-    // return 0;
-
     if(argc==1) {
         printf("This program calculates the extinction coefficients of a nanodisc for a given set of parameters.\n");
         printf("\nParameters:\nN:\t\tSize of Arrays and Matrices (NxN)\nm:\t\tAzimuthal Symmetrie\n"
                "cutoff:\t\tCutoff for g_m\nEF:\t\tFermi level in eV\nomega_S:\tStart of array of optical frequencies in eV\n"
                "omega_E:\tEnd of array of optical frequencies in eV\ngamma:\t\tDamping rate in ev\nradius:\t\tDiskradius in nm\n"
-               "steps:\t\tNumber of steps through the array of frequencies\n\n"
+               "steps:\t\tNumber of steps through the array of frequencies\nT:\t\tTemperature in K\nop:\t\tCondctivity model (0, 1, or 2)\n\n"
                "As last argument the path to a folder can be given, where the output is saved.\n\n");
         printf("Extinction coefficients are saved in the file:\n"
-               "(path to folder)ExtCoeff_N(Val)m(Val)cutoff(Val)EF(Val)omega_S(Val)omega_E(Val)gamma(Val)radius(Val)steps(Val).txt\n");
+               "(path to folder)ExtCoeff_N(Val)m(Val)cutoff(Val)EF(Val)omega_S(Val)omega_E(Val)gamma(Val)radius(Val)steps(Val)T(Val)op(Val).txt\n");
         return 1;
     }
-    if(argc != 10 && argc != 11) {
+    if(argc != 12 && argc != 13) {
         printf("Recheck arguments!\n");
         return 1;
     }
@@ -94,22 +41,21 @@ int main(const int argc, char** argv) {
     const double gamma      = atof(argv[7])/au_eV;
     const double radius     = atof(argv[8])/au_nm;
     const int steps         = atoi(argv[9]);
+    const double T          = atof(argv[10]);
+    const int op            = atoi(argv[11]);
     const double c          = 137.03599;
 
-    double T = 0.0;
-    int op = 2;
-
-    printf("N=%d, m=%d, cutoff=%d, EF=%f, omega_S=%f, omega_E=%f, gamma=%f, radius=%f, steps=%d\n", N, m, cutoff, EF*au_eV, omega_S*au_eV, omega_E*au_eV, gamma*au_eV, radius*au_nm, steps);
+    printf("N=%d, m=%d, cutoff=%d, EF=%f, omega_S=%f, omega_E=%f, gamma=%f, radius=%f, steps=%d, T=%f, op=%d\n", N, m, cutoff, EF*au_eV, omega_S*au_eV, omega_E*au_eV, gamma*au_eV, radius*au_nm, steps, T, op);
 
     // Prepare file for saving (Replace '.' with '_')
-    char filename[512];
-    char params[256];
-    snprintf(params, sizeof(params), "N%dm%dcutoff%dEF%.2fomega_S%.2fomega_E%.2fgamma%.2fradius%.2fsteps%d",
-             N, m, cutoff, EF*au_eV, omega_S*au_eV, omega_E*au_eV, gamma*au_eV, radius*au_nm, steps);
+    char filename[2048];
+    char params[1024];
+    snprintf(params, sizeof(params), "N%dm%dcutoff%dEF%.2fomega_S%.2fomega_E%.2fgamma%.2fradius%.2fsteps%dT%.2fop%d",
+             N, m, cutoff, EF*au_eV, omega_S*au_eV, omega_E*au_eV, gamma*au_eV, radius*au_nm, steps, T, op);
     for (char* p = params; *p; ++p) {
         if (*p == '.') { *p = '_'; }
     }
-    if(argc==11) { snprintf(filename, sizeof(filename), "%sExtCoeff_%s.txt", argv[10], params); } //   ../DataEC/
+    if(argc==13) { snprintf(filename, sizeof(filename), "%sExtCoeff_%s.txt", argv[12], params); } //   ../DataEC/
     else{ snprintf(filename, sizeof(filename), "ExtCoeff_%s.txt", params); }
     printf("Output saved in:\n%s\n", filename);
     FILE* file = fopen(filename, "w");
@@ -145,8 +91,12 @@ int main(const int argc, char** argv) {
 
         // MKL_Complex16 sigma_old = {creal(Drude(EF, omega, gamma)), cimag(Drude(EF, omega, gamma))};
         // MKL_Complex16 eta_old = multiply_complex((MKL_Complex16){0, 1/(omega*radius)}, sigma_old);
-        MKL_Complex16 sigma = GetCond(EF*au_eV, gamma*au_eV, omega*au_eV, T, op);
-        MKL_Complex16 eta = multiply_complex((MKL_Complex16){0, 1/(omega*radius)}, sigma);
+        const MKL_Complex16 sigma = GetCond(EF*au_eV, gamma*au_eV, omega*au_eV, T, op);
+        const MKL_Complex16 eta = multiply_complex((MKL_Complex16){0, 1/(omega*radius)}, sigma);
+        if(i%50 == 0) {
+            printf("sigma=%f+%f\t\t", sigma.real, sigma.imag);
+            printf("eta=%f+%f (%f)\n", eta.real, eta.imag, omega);
+        }
         // if(fabs(eta.real-eta_old.real) >= 1e-7 || fabs(eta.imag-eta_old.imag) >= 1e-7) printf("%f, %f\n", fabs(eta.real-eta_old.real), fabs(eta.imag-eta_old.imag));
         // if(fabs(sigma.real-sigma_new.real) >= 1e-7 || fabs(sigma.imag-sigma_new.imag) >= 1e-7) printf("%f, %f\n", sigma.real-sigma_new.real, sigma.imag-sigma_new.imag);
         // MKL_Complex16 eta = (MKL_Complex16){creal(I*Drude(EF, omega, gamma)/(omega*radius)), cimag(I*Drude(EF, omega, gamma)/(omega*radius))};
@@ -242,7 +192,6 @@ void writeDoubleToFile(const char* filename, int VecOrMat, int N, const double* 
 }
 
 MKL_Complex16 GetCond(double EF, double gamma, double omega, double T, int op) {
-    FILE *fp;
     char buffer[256];
     MKL_Complex16 result = {0, 0};
 
@@ -261,7 +210,7 @@ MKL_Complex16 GetCond(double EF, double gamma, double omega, double T, int op) {
     int arg11       = op;       // op
     snprintf(command, sizeof(command), "../../../../../WindowsWorker/cmake-build-release-remote-host---laptopzerotier/C %f %f %f %f %f %d %f %f %d %f %d",
         arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
-    fp = popen(command, "r");
+    FILE *fp = popen(command, "r");
     if (fp == NULL) {
         printf("Failed to get Conductivity!\n");
     }
@@ -269,11 +218,10 @@ MKL_Complex16 GetCond(double EF, double gamma, double omega, double T, int op) {
     // Read the output of ./C
     if (fgets(buffer, sizeof(buffer), fp) != NULL) {
         // Tokenize the string and extract the floats
-        char *token;
         int count = 0;
 
         // Use strtok to split the string by ", "
-        token = strtok(buffer, " ");
+        char *token = strtok(buffer, " ");
         while (token != NULL) {
             count++;
             if (count == 3) {
