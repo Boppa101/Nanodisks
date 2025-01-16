@@ -93,10 +93,6 @@ int main(const int argc, char** argv) {
         // MKL_Complex16 eta_old = multiply_complex((MKL_Complex16){0, 1/(omega*radius)}, sigma_old);
         const MKL_Complex16 sigma = GetCond(EF*au_eV, gamma*au_eV, omega*au_eV, T, op);
         const MKL_Complex16 eta = multiply_complex((MKL_Complex16){0, 1/(omega*radius)}, sigma);
-        if(i%50 == 0) {
-            printf("sigma=%f+%f\t\t", sigma.real, sigma.imag);
-            printf("eta=%f+%f (%f)\n", eta.real, eta.imag, omega);
-        }
         // if(fabs(eta.real-eta_old.real) >= 1e-7 || fabs(eta.imag-eta_old.imag) >= 1e-7) printf("%f, %f\n", fabs(eta.real-eta_old.real), fabs(eta.imag-eta_old.imag));
         // if(fabs(sigma.real-sigma_new.real) >= 1e-7 || fabs(sigma.imag-sigma_new.imag) >= 1e-7) printf("%f, %f\n", sigma.real-sigma_new.real, sigma.imag-sigma_new.imag);
         // MKL_Complex16 eta = (MKL_Complex16){creal(I*Drude(EF, omega, gamma)/(omega*radius)), cimag(I*Drude(EF, omega, gamma)/(omega*radius))};
