@@ -1,7 +1,7 @@
+// #include <math.h>
+#include <complex.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
-#include <complex.h>
 
 #include "mkl.h"
 
@@ -50,24 +50,26 @@ int main(const int argc, char** argv) {
     char filename_EVal[512]; char filename_EVec[512]; char filename_CD[512];
     FillStrings(N, m, cutoff, EF, omega, gamma, radius, filename_EVal, filename_EVec, filename_CD, sizeof(filename_EVal));
 
+    // Allocate memory
+    MKL_INT NROWS = N, NCOLS = N, NCOLSvl = N, NCOLSvr = N;
     double* ThetaArr_Vec    = (double*)malloc(sizeof(double)*N);
     double* MArr_Mat        = (double*)malloc(sizeof(double)*N*N);
     double* DArr_Mat        = (double*)malloc(sizeof(double)*N*N);
+    MKL_Complex16* EVals    = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N);
+    MKL_Complex16* EVecsr   = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N*N);
+    MKL_Complex16* EPMat    = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N*N);
+    MKL_Complex16 EVecsl[1]; // EVecsl is not needed, since I specify, that left EVecs are not to be calculated
+
+    // Fill arrays
     FillTheta(N, ThetaArr_Vec);
     FillM(N, m, ThetaArr_Vec, cutoff, MArr_Mat);
     Dtilde(N, m, ThetaArr_Vec, DArr_Mat);
 
-    // Arrays for EVals, left EVecs, right EVecs and the matrix
-    // vl is not needed, since I specify, that left EVecs are not to be calculated
-    MKL_INT NROWS = N, NCOLS = N, NCOLSvl = N, NCOLSvr = N;
-    MKL_Complex16* EVals = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N);
-    MKL_Complex16* EVecsr = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N*N);
-    MKL_Complex16* EPMat = (MKL_Complex16*)malloc(sizeof(MKL_Complex16)*N*N);
-    MKL_Complex16 EVecsl[1];
-
     for(int i=0; i<N; i++) {
         for(int j=0; j<N; j++) {
-            EPMat[i*N+j].real = eta.real * MArr_Mat[i*N+j]; EPMat[i*N+j].imag = eta.imag * MArr_Mat[i*N+j];
+            EPMat[i*N+j] = (MKL_Complex16){eta.real * MArr_Mat[i*N+j], eta.imag * MArr_Mat[i*N+j]};
+            // EPMat[i*N+j].real = eta.real * MArr_Mat[i*N+j];
+            // EPMat[i*N+j].imag = eta.imag * MArr_Mat[i*N+j];
         }
     }
 
@@ -107,7 +109,7 @@ int main(const int argc, char** argv) {
         }
     }
 
-    // Maybe extend this function so I can specify the amount of lines to write -> Never use all 100 EVecs/CD
+    // Maybe extend this function so I can specify the amount of lines to write -> Rarely use all 100 EVecs/CD
     writeArrayToFile(filename_CD, 1, N, EVecsr);
 
     free(ThetaArr_Vec);
