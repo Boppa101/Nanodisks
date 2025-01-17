@@ -8,10 +8,12 @@
 
 #include "Functions.h"
 
-// This file contains most of the functions used in main.c, Tests.c and
-// ExtCoeff.c. Defined are potenials, charge density calculations, Frude model
-// and all matrices for the calculations (D2, D1, G2, G1, G0 -> M).
-// All parameters should be in the same unit system (preferably atomic units).
+/*
+    This file contains most of the functions used in main.c, Tests.c and
+    ExtCoeff.c. Defined are potenials, charge density calculations, Frude model
+    and all matrices for the calculations (D2, D1, G2, G1, G0 -> M).
+    All parameters should be in the same unit system (preferably atomic units).
+*/
 
 void FillTheta(int N, double* ThetaArr) {
     for(int i=0; i<N; i++) ThetaArr[i] = 0.5*1/(double)N+(double)i/N;

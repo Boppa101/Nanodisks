@@ -150,13 +150,6 @@ void writeArrayToFile(const char* filename, int VecOrMat, int N, const MKL_Compl
     fclose(file);
 }
 
-// MKL_Complex16 multiply_complex(const MKL_Complex16 z1, const MKL_Complex16 z2) {
-//     MKL_Complex16 result;
-//     result.real = z1.real * z2.real - z1.imag * z2.imag;
-//     result.imag = z1.real * z2.imag + z1.imag * z2.real;
-//     return result;
-// }
-
 void FillStrings(
     int N, int m, int cutoff,
     double EF, double omega, double gamma, double radius,
