@@ -214,7 +214,7 @@ MKL_Complex16 GetCond(double EF, double gamma, double omega, double T, int op) {
         int count = 0;
 
         // Use strtok to split the string by ", "
-        char *token = strtok(buffer, " ");
+        const char *token = strtok(buffer, " ");
         while (token != NULL) {
             count++;
             if (count == 3) {
