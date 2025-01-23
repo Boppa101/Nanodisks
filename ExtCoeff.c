@@ -19,7 +19,7 @@ int main(const int argc, char** argv) {
         printf("\nParameters:\nN:\t\tSize of Arrays and Matrices (NxN)\nm:\t\tAzimuthal Symmetrie\n"
                "cutoff:\t\tCutoff for g_m\nEF:\t\tFermi level in eV\nomega_S:\tStart of array of optical frequencies in eV\n"
                "omega_E:\tEnd of array of optical frequencies in eV\ngamma:\t\tDamping rate in ev\nradius:\t\tDiskradius in nm\n"
-               "steps:\t\tNumber of steps through the array of frequencies\nT:\t\tTemperature in K\nop:\t\tCondctivity model (0, 1, or 2)\n\n"
+               "steps:\t\tNumber of steps through the array of frequencies\nT:\t\tTemperature in K\nop:\t\tConductivity model (0, 1, or 2)\n\n"
                "As last argument the path to a folder can be given, where the output is saved.\n\n");
         printf("Extinction coefficients are saved in the file:\n"
                "(path to folder)ExtCoeff_N(Val)m(Val)cutoff(Val)EF(Val)omega_S(Val)omega_E(Val)gamma(Val)radius(Val)steps(Val)T(Val)op(Val).txt\n");
@@ -92,7 +92,7 @@ int main(const int argc, char** argv) {
         // MKL_Complex16 sigma = {creal(Drude(EF, omega, gamma)), cimag(Drude(EF, omega, gamma))};
         // MKL_Complex16 eta = multiply_complex((MKL_Complex16){0, 1/(omega*radius)}, sigma);
         const MKL_Complex16 sigma = GetCond(EF*au_eV, gamma*au_eV, omega*au_eV, T, op);
-        const MKL_Complex16 eta = multiply_complex((MKL_Complex16){0, 1/(omega*radius)}, sigma);
+        const MKL_Complex16 eta = multiply_complex((MKL_Complex16){0.0, 1.0/(omega*radius)}, sigma);
 
         for(int j=0; j<N; j++) {
             for(int k=0; k<N; k++) {
@@ -188,25 +188,28 @@ MKL_Complex16 GetCond(double EF, double gamma, double omega, double T, int op) {
     char buffer[256];
     MKL_Complex16 result = {0, 0};
 
+    const double vF = c_au/300;
+    const double q_dim = EF*eV_au/vF*nm_au; // kF in 1/nm
+
     // Run the A executable and open a pipe to read its output
     char command[512];
-    double arg1     = EF;       // EF
-    double arg2     = gamma;    // gamma_intra
-    double arg3     = 0.0;      // gamma_inter
-    double arg4     = omega;    // w_S
-    double arg5     = omega;    // w_E
-    int arg6        = 1;        // Nw
-    double arg7     = 0.0;      // q_S
-    double arg8     = 0.0;      // q_E
-    int arg9        = 1;        // Nq
-    double arg10    = T;        // T
-    int arg11       = op;       // op
-    snprintf(command, sizeof(command), "../../../../../WindowsWorker/cmake-build-release-remote-host---laptopzerotier/C %f %f %f %f %f %d %f %f %d %f %d",
-        arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+    double arg1     = EF;           // EF               eV
+    double arg2     = gamma;        // gamma_intra      eV
+    double arg3     = 0.0;          // gamma_inter      eV
+    double arg4     = omega;        // w_S              eV
+    double arg5     = omega;        // w_E              eV
+    int arg6        = 1;            // Nw
+    double arg7     = 0.1*q_dim;   // q_S              1/nm; the value is therefore in dim.less units: q/kF
+    double arg8     = 0.1*q_dim;   // q_E              1/nm; the value is therefore in dim.less units: q/kF
+    int arg9        = 1;            // Nq
+    double arg10    = T;            // T                K
+    int arg11       = op;           // op
+    int arg12       = 1;            // dim              =1 means, input has dimensions eV and 1/nm
+
+    snprintf(command, sizeof(command), "../../../../Conductivity/C/cmake-build-release-remote-host---laptopzerotier/C %f %f %f %f %f %d %f %f %d %f %d %d",
+        arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
     FILE *fp = popen(command, "r");
-    if (fp == NULL) {
-        printf("Failed to get Conductivity!\n");
-    }
+    if (fp == NULL) { printf("Failed to get Conductivity!\n"); }
 
     // Read the output of ./C
     if (fgets(buffer, sizeof(buffer), fp) != NULL) {
