@@ -89,8 +89,6 @@ int main(const int argc, char** argv) {
 
         const double omega = omega_S + (omega_E-omega_S)*(double)i/(double)steps;
 
-        // MKL_Complex16 sigma = {creal(Drude(EF, omega, gamma)), cimag(Drude(EF, omega, gamma))};
-        // MKL_Complex16 eta = multiply_complex((MKL_Complex16){0, 1/(omega*radius)}, sigma);
         const MKL_Complex16 sigma = GetCond(EF*au_eV, gamma*au_eV, omega*au_eV, T, op);
         const MKL_Complex16 eta = multiply_complex((MKL_Complex16){0.0, 1.0/(omega*radius)}, sigma);
 

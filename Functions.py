@@ -13,7 +13,7 @@ def phi_ext(ThetaArr, a): return -a*ThetaArr/2
 
 def TotalPhi(phiArr, radius_index, angle): return phiArr[radius_index]*np.cos(angle)
 
-def TotalChargeDensity(rhoArr, radius_index, angle): return 2*rhoArr[radius_index]*np.cos(angle)
+def TotalChargeDensity(rhoArr, radius_index, m, angle): return 2*rhoArr[radius_index]*np.cos(m*angle)
 
 def Drude(EF, omega, gamma): return 1j/np.pi * EF/(omega + 1j*gamma)# + 1/4 * (1j/np.pi * np.log(np.abs((omega-2*EF)/(omega+2*EF))))
 
