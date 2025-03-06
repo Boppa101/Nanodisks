@@ -1,11 +1,10 @@
 # %%
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import Functions as Fun
 # %% EIGENVECTORS
 N = 600
-m = 1
+m = 0
 cutoff = 100
 EF = 1/27.2114          # eV -> a.u. of energy
 omega = 0.2/27.2114     # eV -> a.u. of energy
@@ -17,6 +16,9 @@ eta = 1j*Fun.Drude(EF, omega, gamma)/(omega*radius)
 ThetaArr = Fun.FillTheta(N)
 Dtilde = Fun.TotalD(N, m, ThetaArr)
 # %%
+# folder = 'DataEC/'
+# CD_file = folder+'ExtCoeff_N300m1cutoff101EF1_00omega_S0_25omega_E0_25gamma0_02radius50_00steps1T0_00op0.txt'
+# CD_file = folder+'ExtCoeff_N300m1cutoff101EF1_00omega_S0_20omega_E0_20gamma0_02radius50_00steps1T0_00op0.txt'
 folder = 'Data/'
 # EVal_file = folder+'EVal_N'+str(N)+'m'+str(m)+'cutoff'+str(cutoff)+'EF'+"{:.2f}".format(EF*27.2114).replace('.', '_')+'omega'+"{:.2f}".format(omega*27.2114).replace('.', '_')+'gamma'+"{:.2f}".format(gamma*27.2114).replace('.', '_')+'radius'+"{:.2f}".format(radius*0.0529177).replace('.', '_')+'.txt'
 EVec_file = folder+'EVec_N'+str(N)+'m'+str(m)+'cutoff'+str(cutoff)+'EF'+"{:.2f}".format(EF*27.2114).replace('.', '_')+'omega'+"{:.2f}".format(omega*27.2114).replace('.', '_')+'gamma'+"{:.2f}".format(gamma*27.2114).replace('.', '_')+'radius'+"{:.2f}".format(radius*0.0529177).replace('.', '_')+'.txt'
@@ -56,6 +58,16 @@ with open(CD_file, 'r') as file:
             AllCD[c, i] = float(ct[0]) + 1j*float(ct[1])
         c+=1
 
+# AllCD = np.zeros((N), dtype=complex)
+# with open(CD_file, 'r') as file:
+#     c = 0
+#     for line in file:
+#         test = line.strip()
+#         ct = test.split("+")
+#         AllCD[c] = float(ct[0]) + 1j*float(ct[1])
+#         c+=1
+
+# which = np.array([0])
 which = np.array([0, 1, 2, 3])
 x = np.append(-np.flip(ThetaArr), ThetaArr)
 colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'] # Standard colors
@@ -68,7 +80,7 @@ for i in which:
     plt.plot(x, CRes+i, linewidth=2, color=colors[i])
 
 plt.xlabel(r'$R$', fontsize=14)
-plt.ylabel(r'$\phi(\Theta, \varphi)$ a.u.', fontsize=14)
+plt.ylabel(r'$\phi(R, \varphi)$ a.u.', fontsize=14)
 plt.yticks(which, which+1)
 plt.xticks([-1, -0.5, 0, 0.5, 1], [r'$-a$', r'$-a/2$', r'$0$', r'$a/2$', r'$a$'])
 plt.xlim(-1.01, 1.01)
@@ -78,13 +90,15 @@ plt.show()
 
 plt.hlines(which, -1, 1, color='grey', linestyle='--')
 for i in which:
+    # renorm = np.max(np.abs(np.real(AllCD)))+1e-7
+    # CRes = np.append((-1)**m*np.flip(np.real(AllCD)), np.real(AllCD))
     renorm = np.max(np.abs(np.real(AllCD[i])))+1e-7
     CRes = np.append((-1)**m*np.flip(np.real(AllCD[i])), np.real(AllCD[i]))/renorm
     if (CRes[0] > 0): CRes *= -1
     plt.plot(x[2:-2], CRes[2:-2]+i, linewidth=2, color=colors[i])
 
 plt.xlabel(r'$R$', fontsize=14)
-plt.ylabel(r'$\rho(\Theta, \varphi)$ a.u.', fontsize=14)
+plt.ylabel(r'$\rho(R, \varphi)$ a.u.', fontsize=14)
 plt.yticks(which, which+1)
 plt.xticks([-1, -0.5, 0, 0.5, 1], [r'$-a$', r'$-a/2$', r'$0$', r'$a/2$', r'$a$'])
 plt.xlim(-1.01, 1.01)
