@@ -220,12 +220,16 @@ def read_arrays(filename):
             entries = line.strip().split(", ")
             all_omega.append(float(entries[0]))
             all_ExtCoeff.append(float(entries[1]))
-    return all_omega, all_ExtCoeff
+    return np.array(all_omega), np.array(all_ExtCoeff)
 # %%
-omega_D, ExtCoeff_D = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T0_00op0.txt')
-omega_RPA, ExtCoeff_RPA = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T0_00op1.txt')
-omega_RPAq1, ExtCoeff_RPAq1 = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T0_00op2q0_10.txt')
-omega_RPAq2, ExtCoeff_RPAq2 = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T0_00op2q0_20.txt')
+folder = 'ECPresentation/'
+omega_1, ExtCoeff_1 = read_arrays(folder+'ExtCoeff_N400m1cutoff100EF1_00omega_S0_15omega_E0_40gamma0_02radius50_00steps400T0_00op0.txt')
+omega_2, ExtCoeff_2 = read_arrays(folder+'ExtCoeff_N400m1cutoff100EF1_00omega_S0_15omega_E0_40gamma0_02radius25_00steps400T0_00op0.txt')
+omega_3, ExtCoeff_3 = read_arrays(folder+'ExtCoeff_N400m1cutoff100EF0_50omega_S0_15omega_E0_40gamma0_02radius25_00steps400T0_00op0.txt')
+# omega_D, ExtCoeff_D = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T0_00op0.txt')
+# omega_RPA, ExtCoeff_RPA = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T0_00op1.txt')
+# omega_RPAq1, ExtCoeff_RPAq1 = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T0_00op2q0_10.txt')
+# omega_RPAq2, ExtCoeff_RPAq2 = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T0_00op2q0_20.txt')
 # omega_RPAq5, ExtCoeff_RPAq5 = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T0_00op2q0_50.txt')
 # omega_D, ExtCoeff_D = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T0_00op0.txt')
 # omega_DT, ExtCoeff_DT = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00omega_S0_22omega_E0_28gamma0_02radius50_00steps400T500_00op0.txt')
@@ -237,10 +241,13 @@ omega_RPAq2, ExtCoeff_RPAq2 = read_arrays('DataEC/ExtCoeff_N100m1cutoff100EF1_00
 # print(np.max(ExtCoeff), np.max(ExtCoeff_o))
 # print(omega[np.where(ExtCoeff == np.max(ExtCoeff))[0][0]], omega_o[np.where(ExtCoeff_o == np.max(ExtCoeff_o))[0][0]])
 # %%
-plt.plot(omega_D, ExtCoeff_D, label='Drude')
-plt.plot(omega_RPA, ExtCoeff_RPA, label='Local RPA')
-plt.plot(omega_RPAq1, ExtCoeff_RPAq1, label='Non-Local RPA (q=0.1)', linestyle='--')
-plt.plot(omega_RPAq2, ExtCoeff_RPAq2, label='Non-Local RPA (q=0.2)', linestyle='--')
+plt.plot(omega_1, ExtCoeff_1, color='black', linewidth=2)
+plt.plot(omega_2, ExtCoeff_2, color='blue', linewidth=2)
+plt.plot(omega_3, ExtCoeff_3, color='red', linewidth=2)
+# plt.plot(omega_D, ExtCoeff_D, label='Drude')
+# plt.plot(omega_RPA, ExtCoeff_RPA, label='Local RPA')
+# plt.plot(omega_RPAq1, ExtCoeff_RPAq1, label='Non-Local RPA (q=0.1)', linestyle='--')
+# plt.plot(omega_RPAq2, ExtCoeff_RPAq2, label='Non-Local RPA (q=0.2)', linestyle='--')
 # plt.plot(omega_RPAq5, ExtCoeff_RPAq5, label='Non-Local RPA (q=0.5)', linestyle='--')
 # plt.plot(omega_DT, ExtCoeff_DT, label='Drude', linestyle='--')
 # plt.plot(omega_DI, ExtCoeff_DI, label='Drude + inter')
@@ -249,12 +256,12 @@ plt.plot(omega_RPAq2, ExtCoeff_RPAq2, label='Non-Local RPA (q=0.2)', linestyle='
 # plt.plot(omega_RPAT_1, ExtCoeff_RPAT_1, label='RPA', linestyle='--')
 # plt.plot(omega, ExtCoeff, color='blue', label='Drude')
 # plt.plot(omega_n, ExtCoeff_n, color='red', label='Local RPA')
-plt.legend()
-plt.xlabel(r'$\hbar\omega\,(\text{eV})$', fontsize=14)
-plt.ylabel(r'$\sigma^\text{ext}/\text{Area}$', fontsize=14)
-# plt.xlim(0.15, 0.4)
-# plt.ylim(0, 1.5)
-# plt.savefig('ExtCoeff_Comparison.png', dpi=350, bbox_inches='tight')
+# plt.legend()
+plt.xlabel(r'$\hbar\omega\,(\text{eV})$')#, fontsize=14
+plt.ylabel(r'$\sigma^\text{ext}/\text{Area}$')#, fontsize=14
+plt.xlim(0.15, 0.4)
+plt.ylim(0, 1.5)
+plt.savefig('images/ExtCoeff_Comparison.png', dpi=350, bbox_inches='tight')
 plt.show()
 # %%
 # I used steps=600, omega_S=0.245 and omega_E=0.26

@@ -139,15 +139,8 @@ int main(const int argc, char** argv) {
         const double ExtCo_Area = 4.0*omega/(radius*radius*c) * Polarisation.imag;
 
         // Save the value of omega and the extinction coefficient
-        // fprintf(file, "%.10f, %.10f", omega*au_eV, ExtCo_Area);
-        // if(i < steps) fprintf(file, "\n");
-
-        // Save the value of omega and the extinction coefficient
-        printf("omega=%f\n", omega);
-        for(int dfdsiu=0; dfdsiu<N; dfdsiu++) {
-            fprintf(file, "%.10f+%.10f\n", phi_ext_Vec_c[dfdsiu].real, phi_ext_Vec_c[dfdsiu].imag);
-        }
-        i = steps+1;
+        fprintf(file, "%.10f, %.10f", omega*au_eV, ExtCo_Area);
+        if(i < steps) fprintf(file, "\n");
     }
 
     fclose(file);
