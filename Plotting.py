@@ -2,6 +2,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import Functions as Fun
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+cm = 1/2.54 # centimeters in inches
+plt.rcParams.update({
+    "pgf.texsystem": "pdflatex",
+    "font.family": "serif",
+    "text.usetex": True,
+    "font.size": 9 #34
+})
 # %% EIGENVECTORS
 N = 600
 m = 0
@@ -105,58 +113,186 @@ plt.xlim(-1.01, 1.01)
 plt.ylim(-0.5, 3.8)
 # plt.savefig('images/CDEVecm'+str(m)+'.png', dpi=350, bbox_inches='tight')
 plt.show()
-# %%
 # %% 3D Plotting
 r_idx = np.arange(N)
 radius = np.linspace(0, 1, N)
-angles = np.linspace(0, 2*np.pi, 4*N)
-r_idx, angle = np.meshgrid(r_idx[:-2], angles[:-2])
+angles = np.linspace(0, 2*np.pi, N)
+r_idx, angle = np.meshgrid(r_idx[:-3], angles[:-3])
 
 thisOne = 2-m
 
-renorm = np.max(np.abs(np.real(AllCD[thisOne])))
-z = Fun.TotalChargeDensity(np.real(AllCD[thisOne][:-2])/renorm, r_idx, m, angle)
-
 x = radius[r_idx] * np.cos(angle)
 y = radius[r_idx] * np.sin(angle)
+# renorm = np.max(np.abs(np.real(AllCD[thisOne][:-1]))) # m=0: /0.006
+z = Fun.TotalChargeDensity(np.real(AllCD[thisOne][:-3]), r_idx, m, angle)
+z = z/np.max(np.real(z))
 
-fig = plt.figure(figsize=[10, 10])
-# ax = fig.add_subplot(111)
-ax = fig.add_subplot(111, projection='3d')
-ax.plot_surface(x, y, z, cmap='seismic', antialiased=False, rstride=1, cstride=1, edgecolor='none')
+# z_neg = np.ma.masked_where(z > 0.75, z)
+# z_pos = np.ma.masked_where(z < 0.7, z)
 
-ax.view_init(azim=280, elev=15)
+L = np.linspace(np.min(z), np.max(z), 1400)
+# L_neg = np.linspace(np.min(z), np.max(z), 800)
+# L_pos = np.linspace(np.min(z), np.max(z), 1000)
 
-ax.set_xlim(-1, 1)
-ax.set_ylim(-1, 1)
+fig = plt.figure(figsize=(17.1*cm, 17.1*cm), dpi=600)
+axs = fig.add_subplot(111, projection='3d')
+# axs.plot_surface(x, y, z, cmap='seismic', antialiased=False, rstride=10, cstride=10, edgecolor='none')
+# cf1 = axs[0, 0].contourf(X, Y, Z1, levels=100, cmap='binary_r')
+axs.contourf(x, y, z, cmap='seismic', levels=L, antialiased=False)
+# axs.contourf(x, y, z_neg, cmap='seismic', levels=L_neg, antialiased=False)
+# axs.contourf(x, y, z_pos, cmap='seismic', levels=L_pos, antialiased=False)
+# cax1 = divider1.append_axes("right", size="5%", pad=0.1)
+# axs.add_colorbar(ticks=[-1, 0, 1])
 
-ax.set_xticks([-1, -0.5, 0, 0.5, 1])
-ax.set_yticks([-1, -0.5, 0, 0.5, 1])
-ax.set_zticks([-1, -0.5, 0, 0.5, 1])
-ax.set_xlabel(r'$x/a$', fontsize=18)
-ax.set_ylabel(r'$y/a$', fontsize=18)
-ax.set_zlabel(r'$\rho$ a.u.', fontsize=18)
+axs.view_init(azim=280, elev=15)
+
+axs.set_xlim3d(-1, 1)
+axs.set_ylim3d(-1, 1)
+axs.set_zlim3d(-1.2, 1)
+
+axs.set_xticks([-1, 0, 1])
+axs.set_yticks([-1, 0, 1])
+axs.set_zticks([-1, 0, 1])
+
+axs.set_xticklabels(labels=[r'$-r$', r'$0$', r'$r$'], ha='center', va='center_baseline')
+axs.set_yticklabels(labels=[r'$-r$', r'$0$', r'$r$'], ha='left', va='baseline')
+axs.set_zticklabels(labels=[], ha='left', va='center_baseline')
+
+axs.set_xlabel(r'$x$', labelpad=10, ha='center', va='center_baseline')
+axs.set_ylabel(r'$y$', labelpad=20, ha='left', va='baseline')
 
 # make the panes transparent
-ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
-ax.yaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
-ax.zaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
-# make the grid lines transparent
-# ax.xaxis._axinfo["grid"]['color'] = (1,1,1,0)
-# ax.yaxis._axinfo["grid"]['color'] = (1,1,1,0)
-# ax.zaxis._axinfo["grid"]['color'] = (1,1,1,0)
+axs.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+axs.yaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+axs.zaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
 
-# ax.axis('off')
+r_idx = np.arange(N)
+radius = np.linspace(0, 1, N)
+angles = np.linspace(0, 2*np.pi, 10*N)
+r_idx, angle = np.meshgrid(r_idx[:-3], angles[:-3])
+x = radius[r_idx] * np.cos(angle)
+y = radius[r_idx] * np.sin(angle)
+z = Fun.TotalChargeDensity(np.real(AllCD[thisOne][:-3]), r_idx, m, angle)
+z = z/np.max(np.real(z))
+axs.contourf(x, y, z, zdir='z', offset=-1.2, cmap='seismic', antialiased=False, levels=200)
 
-# ax.contourf(x, y, z, cmap='seismic', antialiased=False, levels=200)
-ax.contourf(x, y, z, zdir='z', offset=-1.2, cmap='seismic', antialiased=False, levels=200)
+# plt.savefig('images/CD3DPlotm'+str(m)+'Poster.png', dpi=600)
+plt.show()
+# %%
+# %% BIG PLOT
+N = 600
+cutoff = 100
+EF = 1/27.2114          # eV -> a.u. of energy
+omega = 0.2/27.2114     # eV -> a.u. of energy
+gamma = 0.02/27.2114    # eV -> a.u. of energy
+radius = 25/0.0529177   # nm -> a.u. of length
 
-ax.set_zlim(-1.2, 1)
+eta = 1j*Fun.Drude(EF, omega, gamma)/(omega*radius)
 
-# ax.set_zlabel(r'$\rho(x, y)$')
-# ax.set_zlim(-1, 1)
-# plt.savefig('images/CD3DPlotm'+str(m)+'.png', dpi=350, bbox_inches='tight')
-plt.close()
+ThetaArr = Fun.FillTheta(N)
+# %%
+folder = 'Data/'
+EVec_filem0 = folder+'EVec_N'+str(N)+'m'+str(0)+'cutoff'+str(cutoff)+'EF'+"{:.2f}".format(EF*27.2114).replace('.', '_')+'omega'+"{:.2f}".format(omega*27.2114).replace('.', '_')+'gamma'+"{:.2f}".format(gamma*27.2114).replace('.', '_')+'radius'+"{:.2f}".format(radius*0.0529177).replace('.', '_')+'.txt'
+CD_filem0 = folder+'CD___N'+str(N)+'m'+str(0)+'cutoff'+str(cutoff)+'EF'+"{:.2f}".format(EF*27.2114).replace('.', '_')+'omega'+"{:.2f}".format(omega*27.2114).replace('.', '_')+'gamma'+"{:.2f}".format(gamma*27.2114).replace('.', '_')+'radius'+"{:.2f}".format(radius*0.0529177).replace('.', '_')+'.txt'
+EVec_filem1 = folder+'EVec_N'+str(N)+'m'+str(1)+'cutoff'+str(cutoff)+'EF'+"{:.2f}".format(EF*27.2114).replace('.', '_')+'omega'+"{:.2f}".format(omega*27.2114).replace('.', '_')+'gamma'+"{:.2f}".format(gamma*27.2114).replace('.', '_')+'radius'+"{:.2f}".format(radius*0.0529177).replace('.', '_')+'.txt'
+CD_filem1 = folder+'CD___N'+str(N)+'m'+str(1)+'cutoff'+str(cutoff)+'EF'+"{:.2f}".format(EF*27.2114).replace('.', '_')+'omega'+"{:.2f}".format(omega*27.2114).replace('.', '_')+'gamma'+"{:.2f}".format(gamma*27.2114).replace('.', '_')+'radius'+"{:.2f}".format(radius*0.0529177).replace('.', '_')+'.txt'
+# %%
+AllEVecsm0 = np.zeros((N, N), dtype=complex)
+with open(EVec_filem0, 'r') as file:
+    c = 0
+    for line in file:
+        test = line.strip()
+        test = test.split(",")
+        for i in range(N):
+            ct = test[i].split("+")
+            AllEVecsm0[c, i] = float(ct[0]) + 1j*float(ct[1])
+        c+=1
+
+AllCDm0 = np.zeros((N, N), dtype=complex)
+with open(CD_filem0, 'r') as file:
+    c = 0
+    for line in file:
+        test = line.strip()
+        test = test.split(",")
+        for i in range(N):
+            ct = test[i].split("+")
+            AllCDm0[c, i] = float(ct[0]) + 1j*float(ct[1])
+        c+=1
+
+AllEVecsm1 = np.zeros((N, N), dtype=complex)
+with open(EVec_filem1, 'r') as file:
+    c = 0
+    for line in file:
+        test = line.strip()
+        test = test.split(",")
+        for i in range(N):
+            ct = test[i].split("+")
+            AllEVecsm1[c, i] = float(ct[0]) + 1j*float(ct[1])
+        c+=1
+
+AllCDm1 = np.zeros((N, N), dtype=complex)
+with open(CD_filem1, 'r') as file:
+    c = 0
+    for line in file:
+        test = line.strip()
+        test = test.split(",")
+        for i in range(N):
+            ct = test[i].split("+")
+            AllCDm1[c, i] = float(ct[0]) + 1j*float(ct[1])
+        c+=1
+# %%
+which = np.array([0, 1, 2, 3])
+x = np.append(-np.flip(ThetaArr), ThetaArr)
+colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
+# %%
+# Create a figure with 2 rows and 2 columns.
+fig, axs = plt.subplots(2, 2, figsize=(14*cm, 14*cm), dpi=300)
+
+for i in range(2):
+    for j in range(2):
+        axs[i, j].set_xticks([-1, 0, 1], labels=[r'$-1$', r'$0$', r'$1$'])
+        if(j == 0): axs[i, j].set_yticks([0, 1, 2, 3], labels=[r'$1$', r'$2$', r'$3$', r'$4$'])
+        else: axs[i, j].set_yticks([0, 1, 2, 3], labels=[])
+        axs[i, j].set_xlim(-1.01, 1.01)
+        axs[i, j].set_ylim(-0.5, 3.6)
+        axs[i, j].hlines(which, -1, 1, color='grey', linestyle='--')
+
+lw = 1.5
+
+for i in which:
+    # --------------------- Plot 1 ---------------------
+    renorm1 = np.max(np.abs(np.real(AllEVecsm0[i])))+1e-7
+    cf1 = axs[0, 0].plot(x, np.real(np.append(np.flip(AllEVecsm0[i]), AllEVecsm0[i]))/(2*renorm1) + i, linewidth=lw)
+    divider1 = make_axes_locatable(axs[0, 0])
+    axs[0, 0].set_title(r'$m=0$')
+    axs[0, 0].set_xlabel(r'$\Theta$')
+    axs[0, 0].set_ylabel(r'$\phi(\Theta, \varphi)$ a.u.')
+
+    # --------------------- Plot 2 ---------------------
+    renorm2 = np.max(np.abs(np.real(AllEVecsm1[i])))+1e-7
+    cf2 = axs[0, 1].plot(x, (-1)**i * np.real(np.append(-np.flip(AllEVecsm1[i]), AllEVecsm1[i]))/(2.4*renorm2) + i, linewidth=lw)
+    divider2 = make_axes_locatable(axs[0, 1])
+    axs[0, 1].set_title(r'$m=1$')
+    axs[0, 1].set_xlabel(r'$\Theta$')
+
+    # --------------------- Plot 3 ---------------------
+    renorm3 = np.max(np.abs(np.real(AllCDm0[i])))+1e-7
+    cf3 = axs[1, 0].plot(x[1:-1], np.real(np.append(np.flip(AllCDm0[i]), AllCDm0[i]))[1:-1]/(1.5*renorm3) + i, linewidth=lw)
+    divider3 = make_axes_locatable(axs[1, 0])
+    axs[1, 0].set_xlabel(r'$\Theta$')
+    axs[1, 0].set_ylabel(r'$\rho(\Theta, \varphi)$ a.u.')
+
+    # --------------------- Plot 4 ---------------------
+    renorm4 = np.max(np.abs(np.real(AllCDm1[i])))+1e-7
+    cf4 = axs[1, 1].plot(x, (-1)**i * np.real(np.append(-np.flip(AllCDm1[i]), AllCDm1[i]))/(1.5*renorm4) + i, linewidth=lw)
+    divider4 = make_axes_locatable(axs[1, 1])
+    axs[1, 1].set_xlabel(r'$\Theta$')
+
+plt.tight_layout()
+
+# plt.savefig('EVecsPhiCDSmall.png', dpi=300)
+plt.show()
+# %%
 # %%
 # %%
 # N_P = 200
@@ -261,7 +397,7 @@ plt.xlabel(r'$\hbar\omega\,(\text{eV})$')#, fontsize=14
 plt.ylabel(r'$\sigma^\text{ext}/\text{Area}$')#, fontsize=14
 plt.xlim(0.15, 0.4)
 plt.ylim(0, 1.5)
-plt.savefig('images/ExtCoeff_Comparison.png', dpi=350, bbox_inches='tight')
+# plt.savefig('images/ExtCoeff_Comparison.png', dpi=350, bbox_inches='tight')
 plt.show()
 # %%
 # I used steps=600, omega_S=0.245 and omega_E=0.26
