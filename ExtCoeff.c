@@ -50,7 +50,7 @@ int main(const int argc, char** argv) {
     // Prepare file for saving (Replace '.' with '_')
     char filename[2048];
     char params[1024];
-    snprintf(params, sizeof(params), "N%dm%dcutoff%dEF%.2fomega_S%.2fomega_E%.2fgamma%.2fradius%.2fsteps%dT%.2fop%d",
+    snprintf(params, sizeof(params), "N%dm%dcutoff%dEF%.2fomega_Somega_E%.2fgamma%.2fradius%.2fsteps%dT%.2fop%d",
              N, m, cutoff, EF*au_eV, omega_S*au_eV, omega_E*au_eV, gamma*au_eV, radius*au_nm, steps, T, op);
     for (char* p = params; *p; ++p) {
         if (*p == '.') { *p = '_'; }
@@ -197,8 +197,8 @@ MKL_Complex16 GetCond(double EF, double gamma, double omega, double T, int op) {
     double arg4     = omega;        // w_S              eV
     double arg5     = omega;        // w_E              eV
     int arg6        = 1;            // Nw
-    double arg7     = 0.1*q_dim;   // q_S              1/nm; the value is therefore in dim.less units: q/kF
-    double arg8     = 0.1*q_dim;   // q_E              1/nm; the value is therefore in dim.less units: q/kF
+    double arg7     = 0;//0.1*q_dim;   // q_S              1/nm; the value is therefore in dim.less units: q/kF
+    double arg8     = 0;//0.1*q_dim;   // q_E              1/nm; the value is therefore in dim.less units: q/kF
     int arg9        = 1;            // Nq
     double arg10    = T;            // T                K
     int arg11       = op;           // op
